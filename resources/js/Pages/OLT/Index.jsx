@@ -124,7 +124,7 @@ export default function Index({ olts, filters, statuses }) {
 
             <PageHeader
                 eyebrow="Optical Line Terminals"
-                title="OLT Management check auto deployment"
+                title="OLT Management"
                 description="Search, filter, review, and maintain OLT inventory for the access network."
                 actions={
                     <Button
