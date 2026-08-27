@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DistributionPointController;
 use App\Http\Controllers\FaultController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NetworkMapController;
 use App\Http\Controllers\OltController;
 use App\Http\Controllers\OnuController;
@@ -57,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () use ($networkSections
         '/settings',
         [SystemSettingController::class, 'update']
     )->name('settings.update');
+
+    Route::get(
+        '/global-search',
+        GlobalSearchController::class
+    )->name('global-search');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
