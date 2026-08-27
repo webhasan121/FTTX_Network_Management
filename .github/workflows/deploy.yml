@@ -1,0 +1,72 @@
+name: Deploy FTTX to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: fttx-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - fttx-production
+
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+
+      - name: Deploy source files
+        run: |
+          rsync -av --delete \
+            --exclude='.env' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='storage/' \
+            ./ /var/www/fttx/
+
+      - name: Install PHP dependencies
+        working-directory: /var/www/fttx
+        run: |
+          composer install \
+            --no-dev \
+            --no-interaction \
+            --prefer-dist \
+            --optimize-autoloader
+
+      - name: Install frontend dependencies
+        working-directory: /var/www/fttx
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: /var/www/fttx
+        run: npm run build
+
+      - name: Run database migrations
+        working-directory: /var/www/fttx
+        run: php artisan migrate --force
+
+      - name: Clear Laravel caches
+        working-directory: /var/www/fttx
+        run: php artisan optimize:clear
+
+      - name: Cache production configuration
+        working-directory: /var/www/fttx
+        run: |
+          php artisan config:cache
+          php artisan view:cache
+
+      - name: Fix Laravel writable directories
+        working-directory: /var/www/fttx
+        run: |
+          chmod -R ug+rwX storage bootstrap/cache
+
+      - name: Deployment complete
+        run: echo "FTTX Network Management deployed successfully."
