@@ -24,7 +24,7 @@ import {
     CircleDot,
     Crosshair,
     GitBranch,
-    Map,
+    Map as MapIcon,
     Maximize2,
     Network,
     Radio,
@@ -487,7 +487,6 @@ function buildGraph(
     function addEdge(
         parentId,
         childId,
-        animated = false,
     ) {
         if (!parentId) {
             return;
@@ -501,19 +500,6 @@ function buildGraph(
             target: childId,
 
             type: 'smoothstep',
-
-            animated,
-
-            style: {
-                stroke: animated
-                    ? '#0f766e'
-                    : '#a1a1aa',
-
-                strokeWidth:
-                    animated
-                        ? 2
-                        : 1.5,
-            },
         });
     }
 
@@ -583,7 +569,6 @@ function buildGraph(
         addEdge(
             parentId,
             id,
-            true,
         );
 
         return y;
@@ -680,8 +665,6 @@ function buildGraph(
         addEdge(
             parentId,
             id,
-            onu.status ===
-                'online',
         );
 
         return y;
@@ -1083,12 +1066,404 @@ function buildGraph(
         },
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | Connection Health
+    |--------------------------------------------------------------------------
+    |
+    | Every healthy path is animated. If the current node or any upstream
+    | parent is Offline / LOS, that branch becomes static.
+    |
+    */
+
+    const graphNodeMap =
+        new Map(
+            nodes.map(
+                (node) => [
+                    node.id,
+                    node,
+                ],
+            ),
+        );
+
+    const resolvedStatusCache =
+        new Map();
+
+    function normalizedConnectionStatus(
+        status,
+    ) {
+        const value =
+            String(
+                status ??
+                    'online',
+            )
+                .trim()
+                .toLowerCase();
+
+        if (
+            value === 'los' ||
+            value ===
+                'loss_of_signal'
+        ) {
+            return 'los';
+        }
+
+        if (
+            [
+                'offline',
+                'disconnected',
+                'inactive',
+                'disabled',
+                'down',
+            ].includes(value)
+        ) {
+            return 'offline';
+        }
+
+        return 'online';
+    }
+
+    function resolvePathStatus(
+        graphNodeId,
+        visited = new Set(),
+    ) {
+        if (
+            resolvedStatusCache.has(
+                graphNodeId,
+            )
+        ) {
+            return resolvedStatusCache.get(
+                graphNodeId,
+            );
+        }
+
+        if (visited.has(graphNodeId)) {
+            return 'online';
+        }
+
+        visited.add(graphNodeId);
+
+        const node =
+            graphNodeMap.get(
+                graphNodeId,
+            );
+
+        if (!node) {
+            return 'online';
+        }
+
+        const ownStatus =
+            normalizedConnectionStatus(
+                node.data?.status,
+            );
+
+        if (ownStatus === 'los') {
+            resolvedStatusCache.set(
+                graphNodeId,
+                'los',
+            );
+
+            return 'los';
+        }
+
+        const parentId =
+            node.data?.parentGraphId;
+
+        if (!parentId) {
+            resolvedStatusCache.set(
+                graphNodeId,
+                ownStatus,
+            );
+
+            return ownStatus;
+        }
+
+        const parentStatus =
+            resolvePathStatus(
+                parentId,
+                visited,
+            );
+
+        let result =
+            ownStatus;
+
+        if (parentStatus === 'los') {
+            result = 'los';
+        } else if (
+            ownStatus === 'offline' ||
+            parentStatus === 'offline'
+        ) {
+            result = 'offline';
+        } else {
+            result = 'online';
+        }
+
+        resolvedStatusCache.set(
+            graphNodeId,
+            result,
+        );
+
+        return result;
+    }
+
+    edges.forEach(
+        (edge) => {
+            edge.data = {
+                ...edge.data,
+
+                connectionStatus:
+                    resolvePathStatus(
+                        edge.target,
+                    ),
+            };
+        },
+    );
+
     return {
         nodes,
         edges,
     };
 }
 
+/*
+|--------------------------------------------------------------------------
+| Relevant Edge IDs
+|--------------------------------------------------------------------------
+*/
+
+function getRelevantEdgeIds(
+    selectedId,
+    edges,
+) {
+    const relevantIds =
+        new Set();
+
+    if (!selectedId) {
+        return relevantIds;
+    }
+
+    /*
+    | Upstream: selected node -> OLT
+    */
+
+    let current =
+        selectedId;
+
+    while (current) {
+        const incomingEdge =
+            edges.find(
+                (edge) =>
+                    edge.target ===
+                    current,
+            );
+
+        if (!incomingEdge) {
+            break;
+        }
+
+        relevantIds.add(
+            incomingEdge.id,
+        );
+
+        current =
+            incomingEdge.source;
+    }
+
+    /*
+    | Downstream: selected node -> all children
+    */
+
+    const queue = [
+        selectedId,
+    ];
+
+    const visited =
+        new Set([
+            selectedId,
+        ]);
+
+    while (queue.length > 0) {
+        const sourceId =
+            queue.shift();
+
+        edges.forEach(
+            (edge) => {
+                if (
+                    edge.source !==
+                    sourceId
+                ) {
+                    return;
+                }
+
+                relevantIds.add(
+                    edge.id,
+                );
+
+                if (
+                    !visited.has(
+                        edge.target,
+                    )
+                ) {
+                    visited.add(
+                        edge.target,
+                    );
+
+                    queue.push(
+                        edge.target,
+                    );
+                }
+            },
+        );
+    }
+
+    return relevantIds;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Professional Edge Styling
+|--------------------------------------------------------------------------
+|
+| Initial state:
+| - Online  = animated, low opacity
+| - Offline = gray + dashed + static
+| - LOS     = red + static
+|
+| Selected state:
+| - Relevant path becomes strong/highlighted
+| - Unrelated paths become very faint
+| - Offline/LOS never animate
+|
+*/
+
+function styleTopologyEdges(
+    baseEdges,
+    selectedId = null,
+) {
+    const relevantEdges =
+        getRelevantEdgeIds(
+            selectedId,
+            baseEdges,
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Visibility
+    |--------------------------------------------------------------------------
+    */
+
+    const INITIAL_OPACITY = 0.78;
+    const SELECTED_OPACITY = 1;
+    const DIMMED_OPACITY = 0.10;
+
+    return baseEdges.map((edge) => {
+        const connectionStatus =
+            edge.data?.connectionStatus ??
+            'online';
+
+        const highlighted =
+            Boolean(selectedId) &&
+            relevantEdges.has(edge.id);
+
+        const unrelated =
+            Boolean(selectedId) &&
+            !highlighted;
+
+        const opacity =
+            highlighted
+                ? SELECTED_OPACITY
+                : unrelated
+                  ? DIMMED_OPACITY
+                  : INITIAL_OPACITY;
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOS
+        |--------------------------------------------------------------------------
+        */
+
+        if (connectionStatus === 'los') {
+            return {
+                ...edge,
+
+                animated: false,
+
+                style: {
+                    stroke: '#dc2626',
+
+                    strokeWidth:
+                        highlighted
+                            ? 3.5
+                            : 2.4,
+
+                    opacity,
+
+                    transition:
+                        'opacity 180ms ease, stroke-width 180ms ease',
+                },
+            };
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Offline
+        |--------------------------------------------------------------------------
+        */
+
+        if (connectionStatus === 'offline') {
+            return {
+                ...edge,
+
+                animated: false,
+
+                style: {
+                    stroke: '#64748b',
+
+                    strokeWidth:
+                        highlighted
+                            ? 3.5
+                            : 2.4,
+
+                    opacity,
+
+                    strokeDasharray: '7 5',
+
+                    transition:
+                        'opacity 180ms ease, stroke-width 180ms ease',
+                },
+            };
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Online
+        |--------------------------------------------------------------------------
+        */
+
+        return {
+            ...edge,
+
+            animated: true,
+
+            style: {
+                stroke:
+                    highlighted
+                        ? '#0f766e'
+                        : '#0d9488',
+
+                strokeWidth:
+                    highlighted
+                        ? 3.5
+                        : 2.4,
+
+                opacity,
+
+                transition:
+                    'opacity 180ms ease, stroke-width 180ms ease',
+            },
+        };
+    });
+}
 /*
 |--------------------------------------------------------------------------
 | Get Downstream Branch
@@ -1194,7 +1569,7 @@ function NodeDetails({
         return (
             <div className="flex min-h-[350px] items-center justify-center px-6 text-center">
                 <div>
-                    <Map className="w-10 h-10 mx-auto text-zinc-300" />
+                    <MapIcon className="w-10 h-10 mx-auto text-zinc-300" />
 
                     <p className="mt-4 text-sm font-semibold text-zinc-700">
                         Select a network node
@@ -1521,7 +1896,9 @@ export default function Index({
         setEdges,
         onEdgesChange,
     ] = useEdgesState(
-        graph.edges,
+        styleTopologyEdges(
+            graph.edges,
+        ),
     );
 
     /*
@@ -1536,7 +1913,9 @@ export default function Index({
         );
 
         setEdges(
-            graph.edges,
+            styleTopologyEdges(
+                graph.edges,
+            ),
         );
 
         setSelectedNode(
@@ -1775,8 +2154,19 @@ export default function Index({
         );
 
         /*
-         * Automatically focus
-         * selected downstream branch.
+         * Selected node-এর upstream + downstream
+         * path strong highlight হবে।
+         */
+        setEdges(
+            styleTopologyEdges(
+                graph.edges,
+                node.id,
+            ),
+        );
+
+        /*
+         * Existing behavior:
+         * automatically focus selected branch.
          */
         window.setTimeout(
             () => {
@@ -1785,6 +2175,24 @@ export default function Index({
                 );
             },
             50,
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clear Selection
+    |--------------------------------------------------------------------------
+    */
+
+    function clearSelection() {
+        setSelectedNode(
+            null,
+        );
+
+        setEdges(
+            styleTopologyEdges(
+                graph.edges,
+            ),
         );
     }
 
@@ -1913,6 +2321,12 @@ export default function Index({
             null,
         );
 
+        setEdges(
+            styleTopologyEdges(
+                graph.edges,
+            ),
+        );
+
         /*
          * Backend currently filtered থাকলে
          * full network ফিরিয়ে আনো।
@@ -2037,7 +2451,7 @@ export default function Index({
                 className="mt-6"
                 title="Topology Controls"
                 description="Choose an OLT, search network assets, and control the topology view."
-                icon={Map}
+                icon={MapIcon}
             >
                 <div className="flex flex-wrap items-center gap-3">
                     {/* OLT */}
@@ -2241,10 +2655,8 @@ export default function Index({
                             onNodeClick={
                                 handleNodeClick
                             }
-                            onPaneClick={() =>
-                                setSelectedNode(
-                                    null,
-                                )
+                            onPaneClick={
+                                clearSelection
                             }
                             fitView
                             fitViewOptions={{
@@ -2295,10 +2707,8 @@ export default function Index({
                         node={
                             selectedNode
                         }
-                        onClose={() =>
-                            setSelectedNode(
-                                null,
-                            )
+                        onClose={
+                            clearSelection
                         }
                         onFocusNode={
                             focusNode
@@ -2360,3 +2770,5 @@ export default function Index({
         </AuthenticatedLayout>
     );
 }
+
+
