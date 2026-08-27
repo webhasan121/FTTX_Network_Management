@@ -175,7 +175,7 @@ export default function Index({
             >
                 <form
                     onSubmit={submit}
-                    className="grid gap-3 border-b border-zinc-200 p-5 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
+                    className="grid gap-3 border-b border-zinc-200 pb-5 lg:grid-cols-[minmax(0,1fr)_220px_180px_auto]"
                 >
                     <div className="relative">
                         <Search

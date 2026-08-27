@@ -140,7 +140,7 @@ export default function Index({ olts, filters, statuses }) {
             <Card className="mt-6" icon={Server} title="OLT Inventory" bodyClassName="p-0">
                 <form
                     onSubmit={submit}
-                    className="grid gap-3 border-b border-zinc-200 p-5 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
+                    className="grid gap-3 border-b border-zinc-200 pb-5 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
                 >
                     <div className="relative">
                         <Search

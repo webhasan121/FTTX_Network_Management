@@ -151,7 +151,7 @@ export default function Index({ splitters, filters, ponPorts, ratios }) {
                 {/* Filters */}
                 <form
                     onSubmit={submit}
-                    className="flex flex-wrap items-center gap-3 p-5 border-b border-zinc-200"
+                    className="flex flex-wrap items-center gap-3 pb-5 border-b border-zinc-200"
                 >
                     {/* Search */}
                     <div className="relative min-w-[260px] flex-1">

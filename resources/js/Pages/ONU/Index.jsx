@@ -226,7 +226,7 @@ export default function Index({
                 {/* Filters */}
                 <form
                     onSubmit={submit}
-                    className="flex flex-wrap items-center gap-3 p-5 border-b border-zinc-200"
+                    className="flex flex-wrap items-center gap-3 pb-5 border-b border-zinc-200"
                 >
                     <div className="relative min-w-[250px] flex-1">
                         <Search

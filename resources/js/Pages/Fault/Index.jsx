@@ -190,7 +190,7 @@ export default function Index({
             >
                 <form
                     onSubmit={submit}
-                    className="flex flex-wrap items-center gap-3 p-5 border-b border-zinc-200"
+                    className="flex flex-wrap items-center gap-3 pb-5 border-b border-zinc-200"
                 >
                     <div className="relative min-w-[240px] flex-1">
                         <Search className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none left-3 top-1/2 text-zinc-400" />
