@@ -11,9 +11,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\OltService;
 
 class OltController extends Controller
 {
+
+    public function __construct(
+        private readonly OltService $oltService
+    ) {}
+
     private const STATUSES = [
         'online' => 'Online',
         'offline' => 'Offline',
@@ -27,47 +33,42 @@ class OltController extends Controller
     {
         Gate::authorize('viewAny', Olt::class);
 
-        $search = $request->string('search')->trim()->toString();
-        $status = $request->string('status')->trim()->toString();
-        $status = array_key_exists($status, self::STATUSES) ? $status : '';
+        $search = $request
+            ->string('search')
+            ->trim()
+            ->toString();
 
-        $olts = Olt::query()
-            ->select([
-                'id',
-                'name',
-                'code',
-                'vendor',
-                'model',
-                'ip_address',
-                'location_name',
-                'total_pon_ports',
-                'status',
-                'updated_at',
-            ])
-            ->withCount('ponPorts')
-            ->when($search !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhere('vendor', 'like', "%{$search}%")
-                        ->orWhere('model', 'like', "%{$search}%")
-                        ->orWhere('ip_address', 'like', "%{$search}%")
-                        ->orWhere('location_name', 'like', "%{$search}%");
-                });
-            })
-            ->when($status !== '', fn (Builder $query): Builder => $query->where('status', $status))
-            ->latest('updated_at')
-            ->paginate(10)
-            ->withQueryString()
-            ->through(fn (Olt $olt): array => $this->indexData($olt));
+        $status = $request
+            ->string('status')
+            ->trim()
+            ->toString();
+
+        $status = array_key_exists(
+            $status,
+            self::STATUSES
+        )
+            ? $status
+            : '';
+
+        $olts = $this->oltService
+            ->paginate(
+                search: $search,
+                status: $status,
+                perPage: 10,
+            )
+            ->through(
+                fn(Olt $olt): array =>
+                $this->indexData($olt)
+            );
 
         return Inertia::render('OLT/Index', [
             'olts' => $olts,
+
             'filters' => [
                 'search' => $search,
                 'status' => $status,
             ],
+
             'statuses' => $this->statusOptions(),
         ]);
     }
@@ -192,7 +193,7 @@ class OltController extends Controller
             'created_at' => $olt->created_at?->toDayDateTimeString(),
             'updated_at' => $olt->updated_at?->toDayDateTimeString(),
             'pon_ports' => $olt->ponPorts
-                ->map(fn ($ponPort): array => [
+                ->map(fn($ponPort): array => [
                     'id' => $ponPort->id,
                     'name' => $ponPort->name,
                     'port_number' => $ponPort->port_number,
@@ -242,7 +243,7 @@ class OltController extends Controller
     private function statusOptions(): array
     {
         return collect(self::STATUSES)
-            ->map(fn (string $label, string $value): array => [
+            ->map(fn(string $label, string $value): array => [
                 'value' => $value,
                 'label' => $label,
             ])

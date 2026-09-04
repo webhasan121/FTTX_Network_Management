@@ -1,11 +1,12 @@
-import Button from '@/Components/UI/Button';
-import Card from '@/Components/UI/Card';
-import EmptyState from '@/Components/UI/EmptyState';
-import PageHeader from '@/Components/UI/PageHeader';
-import StatusBadge from '@/Components/UI/StatusBadge';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { classNames } from '@/lib/utils';
-import { Head, Link, router } from '@inertiajs/react';
+import Button from "@/Components/UI/Button";
+import Card from "@/Components/UI/Card";
+import EmptyState from "@/Components/UI/EmptyState";
+import PageHeader from "@/Components/UI/PageHeader";
+import StatusBadge from "@/Components/UI/StatusBadge";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { classNames } from "@/lib/utils";
+import { Head, Link, router } from "@inertiajs/react";
+import usePermission from "@/Hooks/usePermission";
 import {
     Eye,
     Pencil,
@@ -14,18 +15,16 @@ import {
     Search,
     Trash2,
     Users,
-} from 'lucide-react';
-import { useState } from 'react';
+} from "lucide-react";
+import { useState } from "react";
 
 const statusTone = {
-    active: 'online',
-    inactive: 'neutral',
+    active: "online",
+    inactive: "neutral",
 };
 
 function paginationLabel(label) {
-    return label
-        .replace('&laquo;', 'Previous')
-        .replace('&raquo;', 'Next');
+    return label.replace("&laquo;", "Previous").replace("&raquo;", "Next");
 }
 
 function Pagination({ links }) {
@@ -56,10 +55,10 @@ function Pagination({ links }) {
                         preserveScroll
                         preserveState
                         className={classNames(
-                            'inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition',
+                            "inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition",
                             link.active
-                                ? 'border-zinc-950 bg-zinc-950 text-white'
-                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800',
+                                ? "border-zinc-950 bg-zinc-950 text-white"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800",
                         )}
                     >
                         {label}
@@ -70,24 +69,17 @@ function Pagination({ links }) {
     );
 }
 
-export default function Index({
-    customers,
-    filters,
-    statuses,
-}) {
-    const [search, setSearch] = useState(
-        filters?.search ?? '',
-    );
+export default function Index({ customers, filters, statuses }) {
+    const { can } = usePermission();
+    const [search, setSearch] = useState(filters?.search ?? "");
 
-    const [status, setStatus] = useState(
-        filters?.status ?? '',
-    );
+    const [status, setStatus] = useState(filters?.status ?? "");
 
     function submit(event) {
         event.preventDefault();
 
         router.get(
-            route('customers.index'),
+            route("customers.index"),
             {
                 ...(search ? { search } : {}),
                 ...(status ? { status } : {}),
@@ -101,11 +93,11 @@ export default function Index({
     }
 
     function resetFilters() {
-        setSearch('');
-        setStatus('');
+        setSearch("");
+        setStatus("");
 
         router.get(
-            route('customers.index'),
+            route("customers.index"),
             {},
             {
                 preserveState: true,
@@ -124,15 +116,9 @@ export default function Index({
             return;
         }
 
-        router.delete(
-            route(
-                'customers.destroy',
-                customer.id,
-            ),
-            {
-                preserveScroll: true,
-            },
-        );
+        router.delete(route("customers.destroy", customer.id), {
+            preserveScroll: true,
+        });
     }
 
     return (
@@ -147,19 +133,17 @@ export default function Index({
                 title="Customer Management"
                 description="Manage subscriber information, contact details, service areas, and network connection status."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'customers.create',
-                                ),
-                            )
-                        }
-                    >
-                        Add Customer
-                    </Button>
+                    can("customer.view") ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(route("customers.create"))
+                            }
+                        >
+                            Add Customer
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -183,11 +167,7 @@ export default function Index({
                         <input
                             type="search"
                             value={search}
-                            onChange={(event) =>
-                                setSearch(
-                                    event.target.value,
-                                )
-                            }
+                            onChange={(event) => setSearch(event.target.value)}
                             className="w-full h-10 pr-3 text-sm transition bg-white border rounded-lg shadow-sm outline-none border-zinc-300 pl-9 text-zinc-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                             placeholder="Search customer, phone, area..."
                         />
@@ -195,39 +175,20 @@ export default function Index({
 
                     <select
                         value={status}
-                        onChange={(event) =>
-                            setStatus(
-                                event.target.value,
-                            )
-                        }
+                        onChange={(event) => setStatus(event.target.value)}
                         className="h-10 w-[170px] rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
                     >
-                        <option value="">
-                            All Statuses
-                        </option>
+                        <option value="">All Statuses</option>
 
-                        {statuses.map(
-                            (item) => (
-                                <option
-                                    key={
-                                        item.value
-                                    }
-                                    value={
-                                        item.value
-                                    }
-                                >
-                                    {item.label}
-                                </option>
-                            ),
-                        )}
+                        {statuses.map((item) => (
+                            <option key={item.value} value={item.value}>
+                                {item.label}
+                            </option>
+                        ))}
                     </select>
 
                     <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            icon={Search}
-                        >
+                        <Button type="submit" variant="primary" icon={Search}>
                             Search
                         </Button>
 
@@ -275,95 +236,83 @@ export default function Index({
                                 </thead>
 
                                 <tbody className="bg-white divide-y divide-zinc-200">
-                                    {customers.data.map(
-                                        (customer) => (
-                                            <tr
-                                                key={
-                                                    customer.id
-                                                }
-                                                className="transition hover:bg-zinc-50/70"
-                                            >
-                                                <td className="min-w-[220px] px-5 py-4">
-                                                    <p className="text-sm font-semibold text-zinc-950">
+                                    {customers.data.map((customer) => (
+                                        <tr
+                                            key={customer.id}
+                                            className="transition hover:bg-zinc-50/70"
+                                        >
+                                            <td className="min-w-[220px] px-5 py-4">
+                                                <p className="text-sm font-semibold text-zinc-950">
+                                                    {customer.name}
+                                                </p>
+
+                                                <p className="mt-1 text-xs font-medium text-zinc-500">
+                                                    {customer.customer_code}
+                                                </p>
+                                            </td>
+
+                                            <td className="min-w-[210px] px-5 py-4">
+                                                <p className="text-sm font-medium text-zinc-700">
+                                                    {customer.phone ||
+                                                        "No phone"}
+                                                </p>
+
+                                                <p className="mt-1 text-xs text-zinc-500">
+                                                    {customer.email ||
+                                                        "No email"}
+                                                </p>
+                                            </td>
+
+                                            <td className="min-w-[170px] px-5 py-4">
+                                                <p className="text-sm text-zinc-700">
+                                                    {customer.area ||
+                                                        "Unassigned"}
+                                                </p>
+                                            </td>
+
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex min-w-8 items-center justify-center rounded-lg bg-zinc-100 px-2.5 py-1.5 text-sm font-semibold text-zinc-700">
                                                         {
-                                                            customer.name
+                                                            customer.connections_count
                                                         }
-                                                    </p>
+                                                    </span>
 
-                                                    <p className="mt-1 text-xs font-medium text-zinc-500">
-                                                        {
-                                                            customer.customer_code
-                                                        }
-                                                    </p>
-                                                </td>
-
-                                                <td className="min-w-[210px] px-5 py-4">
-                                                    <p className="text-sm font-medium text-zinc-700">
-                                                        {customer.phone ||
-                                                            'No phone'}
-                                                    </p>
-
-                                                    <p className="mt-1 text-xs text-zinc-500">
-                                                        {customer.email ||
-                                                            'No email'}
-                                                    </p>
-                                                </td>
-
-                                                <td className="min-w-[170px] px-5 py-4">
-                                                    <p className="text-sm text-zinc-700">
-                                                        {customer.area ||
-                                                            'Unassigned'}
-                                                    </p>
-                                                </td>
-
-                                                <td className="px-5 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="inline-flex min-w-8 items-center justify-center rounded-lg bg-zinc-100 px-2.5 py-1.5 text-sm font-semibold text-zinc-700">
+                                                    {customer.active_connections_count >
+                                                        0 && (
+                                                        <span className="text-xs font-medium text-teal-700">
                                                             {
-                                                                customer.connections_count
-                                                            }
+                                                                customer.active_connections_count
+                                                            }{" "}
+                                                            active
                                                         </span>
+                                                    )}
+                                                </div>
+                                            </td>
 
-                                                        {customer.active_connections_count >
-                                                            0 && (
-                                                            <span className="text-xs font-medium text-teal-700">
-                                                                {
-                                                                    customer.active_connections_count
-                                                                }{' '}
-                                                                active
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-5 py-4 whitespace-nowrap">
-                                                    <StatusBadge
-                                                        tone={
-                                                            statusTone[
-                                                                customer
-                                                                    .status
-                                                            ] ??
-                                                            'neutral'
-                                                        }
-                                                    >
-                                                        {
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <StatusBadge
+                                                    tone={
+                                                        statusTone[
                                                             customer.status
-                                                        }
-                                                    </StatusBadge>
-                                                </td>
+                                                        ] ?? "neutral"
+                                                    }
+                                                >
+                                                    {customer.status}
+                                                </StatusBadge>
+                                            </td>
 
-                                                <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
-                                                    <div className="flex justify-end gap-2">
+                                            <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    {can("customer.view") && (
                                                         <Button
                                                             size="sm"
                                                             variant="secondary"
-                                                            icon={
-                                                                Eye
-                                                            }
+                                                            icon={Eye}
                                                             onClick={() =>
                                                                 router.visit(
                                                                     route(
-                                                                        'customers.show',
+                                                                        "customers.show",
                                                                         customer.id,
                                                                     ),
                                                                 )
@@ -371,17 +320,17 @@ export default function Index({
                                                         >
                                                             View
                                                         </Button>
+                                                    )}
 
+                                                    {can("customer.update") && (
                                                         <Button
                                                             size="sm"
                                                             variant="secondary"
-                                                            icon={
-                                                                Pencil
-                                                            }
+                                                            icon={Pencil}
                                                             onClick={() =>
                                                                 router.visit(
                                                                     route(
-                                                                        'customers.edit',
+                                                                        "customers.edit",
                                                                         customer.id,
                                                                     ),
                                                                 )
@@ -389,13 +338,13 @@ export default function Index({
                                                         >
                                                             Edit
                                                         </Button>
+                                                    )}
 
+                                                    {can("customer.delete") && (
                                                         <Button
                                                             size="sm"
                                                             variant="danger"
-                                                            icon={
-                                                                Trash2
-                                                            }
+                                                            icon={Trash2}
                                                             onClick={() =>
                                                                 deleteCustomer(
                                                                     customer,
@@ -404,20 +353,16 @@ export default function Index({
                                                         >
                                                             Delete
                                                         </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )}
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
 
-                        <Pagination
-                            links={
-                                customers.links
-                            }
-                        />
+                        <Pagination links={customers.links} />
                     </>
                 ) : (
                     <div className="p-6">
@@ -427,11 +372,7 @@ export default function Index({
                             description="No customer matched the current search or filters."
                             actionLabel="Add Customer"
                             onAction={() =>
-                                router.visit(
-                                    route(
-                                        'customers.create',
-                                    ),
-                                )
+                                router.visit(route("customers.create"))
                             }
                         />
                     </div>
