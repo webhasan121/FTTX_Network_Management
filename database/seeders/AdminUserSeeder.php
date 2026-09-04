@@ -5,22 +5,28 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Seed the default administrator account.
-     */
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@fttx.test'],
+        $adminRole = Role::firstOrCreate([
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
+
+        $user = User::firstOrCreate(
             [
-                'name' => 'Super Admin',
-                'password' => Hash::make('password123'),
-                'role' => 'admin',
-                'email_verified_at' => now(),
+                'email' => 'admin@fttx.test',
             ],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
         );
+
+        $user->syncRoles([$adminRole]);
     }
 }

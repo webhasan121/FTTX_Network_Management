@@ -7,39 +7,34 @@ use App\Models\User;
 
 class CustomerPolicy
 {
-    private function isAdmin(User $user): bool
-    {
-        return $user->role === 'admin';
-    }
-
     public function viewAny(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('customer.view');
     }
 
     public function view(
         User $user,
         Customer $customer
     ): bool {
-        return $this->isAdmin($user);
+        return $user->can('customer.view');
     }
 
     public function create(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('customer.create');
     }
 
     public function update(
         User $user,
         Customer $customer
     ): bool {
-        return $this->isAdmin($user);
+        return $user->can('customer.update');
     }
 
     public function delete(
         User $user,
         Customer $customer
     ): bool {
-        return $this->isAdmin($user);
+        return $user->can('customer.delete');
     }
 }

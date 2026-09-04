@@ -12,7 +12,7 @@ class OltPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.view');
     }
 
     /**
@@ -20,7 +20,7 @@ class OltPolicy
      */
     public function view(User $user, Olt $olt): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.view');
     }
 
     /**
@@ -28,7 +28,7 @@ class OltPolicy
      */
     public function create(User $user): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.create');
     }
 
     /**
@@ -36,7 +36,7 @@ class OltPolicy
      */
     public function update(User $user, Olt $olt): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.update');
     }
 
     /**
@@ -44,7 +44,7 @@ class OltPolicy
      */
     public function delete(User $user, Olt $olt): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.delete');
     }
 
     /**
@@ -52,7 +52,7 @@ class OltPolicy
      */
     public function restore(User $user, Olt $olt): bool
     {
-        return $this->isAdmin($user);
+        return $user->can('olt.restore');
     }
 
     /**
@@ -60,11 +60,6 @@ class OltPolicy
      */
     public function forceDelete(User $user, Olt $olt): bool
     {
-        return $this->isAdmin($user);
-    }
-
-    private function isAdmin(User $user): bool
-    {
-        return $user->role === 'admin';
+        return $user->can('olt.force-delete');
     }
 }

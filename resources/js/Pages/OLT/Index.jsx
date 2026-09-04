@@ -1,11 +1,12 @@
-import Button from '@/Components/UI/Button';
-import Card from '@/Components/UI/Card';
-import EmptyState from '@/Components/UI/EmptyState';
-import PageHeader from '@/Components/UI/PageHeader';
-import StatusBadge from '@/Components/UI/StatusBadge';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { classNames } from '@/lib/utils';
-import { Head, Link, router } from '@inertiajs/react';
+import Button from "@/Components/UI/Button";
+import Card from "@/Components/UI/Card";
+import EmptyState from "@/Components/UI/EmptyState";
+import PageHeader from "@/Components/UI/PageHeader";
+import StatusBadge from "@/Components/UI/StatusBadge";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { classNames } from "@/lib/utils";
+import { Head, Link, router } from "@inertiajs/react";
+import usePermission from "@/Hooks/usePermission";
 import {
     Eye,
     Pencil,
@@ -14,13 +15,13 @@ import {
     Search,
     Server,
     Trash2,
-} from 'lucide-react';
-import { useState } from 'react';
+} from "lucide-react";
+import { useState } from "react";
 
 const statusTone = {
-    online: 'online',
-    offline: 'offline',
-    maintenance: 'maintenance',
+    online: "online",
+    offline: "offline",
+    maintenance: "maintenance",
 };
 
 function formatNumber(value) {
@@ -28,9 +29,7 @@ function formatNumber(value) {
 }
 
 function paginationLabel(label) {
-    return label
-        .replace('&laquo;', 'Previous')
-        .replace('&raquo;', 'Next');
+    return label.replace("&laquo;", "Previous").replace("&raquo;", "Next");
 }
 
 function Pagination({ links }) {
@@ -39,7 +38,7 @@ function Pagination({ links }) {
     }
 
     return (
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 px-5 py-4 border-t border-zinc-200">
             {links.map((link) => {
                 const label = paginationLabel(link.label);
 
@@ -47,7 +46,7 @@ function Pagination({ links }) {
                     return (
                         <span
                             key={`${label}-disabled`}
-                            className="inline-flex h-9 items-center rounded-lg border border-zinc-200 px-3 text-sm font-medium text-zinc-400"
+                            className="inline-flex items-center px-3 text-sm font-medium border rounded-lg h-9 border-zinc-200 text-zinc-400"
                         >
                             {label}
                         </span>
@@ -61,10 +60,10 @@ function Pagination({ links }) {
                         preserveScroll
                         preserveState
                         className={classNames(
-                            'inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition',
+                            "inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition",
                             link.active
-                                ? 'border-zinc-950 bg-zinc-950 text-white'
-                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800',
+                                ? "border-zinc-950 bg-zinc-950 text-white"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800",
                         )}
                     >
                         {label}
@@ -76,14 +75,14 @@ function Pagination({ links }) {
 }
 
 export default function Index({ olts, filters, statuses }) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [status, setStatus] = useState(filters.status ?? '');
-
+    const [search, setSearch] = useState(filters.search ?? "");
+    const [status, setStatus] = useState(filters.status ?? "");
+    const { can } = usePermission();
     function submit(event) {
         event.preventDefault();
 
         router.get(
-            route('olts.index'),
+            route("olts.index"),
             {
                 ...(search ? { search } : {}),
                 ...(status ? { status } : {}),
@@ -96,9 +95,13 @@ export default function Index({ olts, filters, statuses }) {
     }
 
     function resetFilters() {
-        setSearch('');
-        setStatus('');
-        router.get(route('olts.index'), {}, { preserveState: true, replace: true });
+        setSearch("");
+        setStatus("");
+        router.get(
+            route("olts.index"),
+            {},
+            { preserveState: true, replace: true },
+        );
     }
 
     function deleteOlt(olt) {
@@ -110,7 +113,7 @@ export default function Index({ olts, filters, statuses }) {
             return;
         }
 
-        router.delete(route('olts.destroy', olt.id), {
+        router.delete(route("olts.destroy", olt.id), {
             preserveScroll: true,
         });
     }
@@ -127,31 +130,38 @@ export default function Index({ olts, filters, statuses }) {
                 title="OLT Management"
                 description="Search, filter, review, and maintain OLT inventory for the access network."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() => router.visit(route('olts.create'))}
-                    >
-                        Add OLT
-                    </Button>
+                    can("olt.create") ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() => router.visit(route("olts.create"))}
+                        >
+                            Add OLT
+                        </Button>
+                    ) : null
                 }
             />
 
-            <Card className="mt-6" icon={Server} title="OLT Inventory" bodyClassName="p-0">
+            <Card
+                className="mt-6"
+                icon={Server}
+                title="OLT Inventory"
+                bodyClassName="p-0"
+            >
                 <form
                     onSubmit={submit}
                     className="grid gap-3 border-b border-zinc-200 pb-5 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
                 >
                     <div className="relative">
                         <Search
-                            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                            className="absolute w-4 h-4 -translate-y-1/2 pointer-events-none left-3 top-1/2 text-zinc-400"
                             aria-hidden="true"
                         />
                         <input
                             type="search"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            className="h-10 w-full rounded-lg border-zinc-300 pl-9 text-sm text-zinc-900 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                            className="w-full h-10 text-sm rounded-lg shadow-sm border-zinc-300 pl-9 text-zinc-900 focus:border-teal-500 focus:ring-teal-500"
                             placeholder="Search by name, code, vendor, IP, or location"
                         />
                     </div>
@@ -159,7 +169,7 @@ export default function Index({ olts, filters, statuses }) {
                     <select
                         value={status}
                         onChange={(event) => setStatus(event.target.value)}
-                        className="h-10 rounded-lg border-zinc-300 text-sm text-zinc-900 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                        className="h-10 text-sm rounded-lg shadow-sm border-zinc-300 text-zinc-900 focus:border-teal-500 focus:ring-teal-500"
                     >
                         <option value="">All statuses</option>
                         {statuses.map((option) => (
@@ -173,7 +183,12 @@ export default function Index({ olts, filters, statuses }) {
                         <Button type="submit" variant="primary" icon={Search}>
                             Search
                         </Button>
-                        <Button type="button" variant="secondary" icon={RotateCcw} onClick={resetFilters}>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            icon={RotateCcw}
+                            onClick={resetFilters}
+                        >
                             Reset
                         </Button>
                     </div>
@@ -185,30 +200,30 @@ export default function Index({ olts, filters, statuses }) {
                             <table className="min-w-full divide-y divide-zinc-200">
                                 <thead className="bg-zinc-50">
                                     <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             OLT
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Vendor / Model
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             IP Address
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Location
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             PON Ports
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Status
                                         </th>
-                                        <th className="px-5 py-3 text-right text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-right uppercase text-zinc-500">
                                             Actions
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-200 bg-white">
+                                <tbody className="bg-white divide-y divide-zinc-200">
                                     {olts.data.map((olt) => (
                                         <tr key={olt.id}>
                                             <td className="px-5 py-4">
@@ -221,49 +236,82 @@ export default function Index({ olts, filters, statuses }) {
                                                     </p>
                                                 </div>
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm text-zinc-700">
+                                            <td className="px-5 py-4 text-sm whitespace-nowrap text-zinc-700">
                                                 {olt.vendor} / {olt.model}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm font-medium text-zinc-700">
+                                            <td className="px-5 py-4 text-sm font-medium whitespace-nowrap text-zinc-700">
                                                 {olt.ip_address}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm text-zinc-500">
-                                                {olt.location_name ?? 'Unassigned'}
+                                            <td className="px-5 py-4 text-sm whitespace-nowrap text-zinc-500">
+                                                {olt.location_name ??
+                                                    "Unassigned"}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm text-zinc-700">
-                                                {formatNumber(olt.pon_ports_count)} / {formatNumber(olt.total_pon_ports)}
+                                            <td className="px-5 py-4 text-sm whitespace-nowrap text-zinc-700">
+                                                {formatNumber(
+                                                    olt.pon_ports_count,
+                                                )}{" "}
+                                                /{" "}
+                                                {formatNumber(
+                                                    olt.total_pon_ports,
+                                                )}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4">
-                                                <StatusBadge tone={statusTone[olt.status] ?? 'neutral'}>
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <StatusBadge
+                                                    tone={
+                                                        statusTone[
+                                                            olt.status
+                                                        ] ?? "neutral"
+                                                    }
+                                                >
                                                     {olt.status_label}
                                                 </StatusBadge>
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4">
+                                            <td className="px-5 py-4 whitespace-nowrap">
                                                 <div className="flex justify-end gap-2">
                                                     <Button
                                                         size="sm"
                                                         variant="secondary"
                                                         icon={Eye}
-                                                        onClick={() => router.visit(route('olts.show', olt.id))}
+                                                        onClick={() =>
+                                                            router.visit(
+                                                                route(
+                                                                    "olts.show",
+                                                                    olt.id,
+                                                                ),
+                                                            )
+                                                        }
                                                     >
                                                         View
                                                     </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        icon={Pencil}
-                                                        onClick={() => router.visit(route('olts.edit', olt.id))}
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="danger"
-                                                        icon={Trash2}
-                                                        onClick={() => deleteOlt(olt)}
-                                                    >
-                                                        Delete
-                                                    </Button>
+                                                    {can("olt.update") && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            icon={Pencil}
+                                                            onClick={() =>
+                                                                router.visit(
+                                                                    route(
+                                                                        "olts.edit",
+                                                                        olt.id,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
+                                                    {can("olt.delete") && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="danger"
+                                                            icon={Trash2}
+                                                            onClick={() =>
+                                                                deleteOlt(olt)
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -272,9 +320,11 @@ export default function Index({ olts, filters, statuses }) {
                             </table>
                         </div>
 
-                        <div className="flex flex-col gap-3 border-t border-zinc-200 px-5 py-4 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-3 px-5 py-4 text-sm border-t border-zinc-200 text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
                             <span>
-                                Showing {formatNumber(olts.from)} to {formatNumber(olts.to)} of {formatNumber(olts.total)} OLTs
+                                Showing {formatNumber(olts.from)} to{" "}
+                                {formatNumber(olts.to)} of{" "}
+                                {formatNumber(olts.total)} OLTs
                             </span>
                         </div>
                         <Pagination links={olts.links} />
@@ -284,9 +334,19 @@ export default function Index({ olts, filters, statuses }) {
                         <EmptyState
                             icon={Server}
                             title="No OLTs found"
-                            description="Create an OLT or adjust the current search and status filters."
-                            actionLabel="Add OLT"
-                            onAction={() => router.visit(route('olts.create'))}
+                            description={
+                                can("olt.create")
+                                    ? "Create an OLT or adjust the current search and status filters."
+                                    : "No OLTs match the current search and status filters."
+                            }
+                            actionLabel={
+                                can("olt.create") ? "Add OLT" : undefined
+                            }
+                            onAction={
+                                can("olt.create")
+                                    ? () => router.visit(route("olts.create"))
+                                    : undefined
+                            }
                         />
                     </div>
                 )}

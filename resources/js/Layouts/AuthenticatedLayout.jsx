@@ -30,7 +30,7 @@ export default function AuthenticatedLayout({
                 <main className="px-4 py-6 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-7xl">
                         {header && (
-                            <div className="mb-6 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
+                            <div className="p-5 mb-6 bg-white border rounded-lg shadow-sm border-zinc-200">
                                 {header}
                             </div>
                         )}

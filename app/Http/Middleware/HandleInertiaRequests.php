@@ -30,22 +30,52 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
+
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+
+                'roles' => $user
+                    ? $user->getRoleNames()->values()->all()
+                    : [],
+
+                'permissions' => $user
+                    ? $user->getAllPermissions()
+                        ->pluck('name')
+                        ->values()
+                        ->all()
+                    : [],
+
+                'is_admin' => $user
+                    ? $user->hasRole('admin')
+                    : false,
             ],
+
             'flash' => [
-                'id' => fn (): ?string => $request->session()->hasAny([
-                    'success',
-                    'error',
-                    'warning',
-                    'info',
-                ]) ? Str::uuid()->toString() : null,
-                'success' => fn (): ?string => $request->session()->get('success'),
-                'error' => fn (): ?string => $request->session()->get('error'),
-                'warning' => fn (): ?string => $request->session()->get('warning'),
-                'info' => fn (): ?string => $request->session()->get('info'),
+                'id' => fn (): ?string =>
+                    $request->session()->hasAny([
+                        'success',
+                        'error',
+                        'warning',
+                        'info',
+                    ])
+                        ? Str::uuid()->toString()
+                        : null,
+
+                'success' => fn (): ?string =>
+                    $request->session()->get('success'),
+
+                'error' => fn (): ?string =>
+                    $request->session()->get('error'),
+
+                'warning' => fn (): ?string =>
+                    $request->session()->get('warning'),
+
+                'info' => fn (): ?string =>
+                    $request->session()->get('info'),
             ],
         ];
     }

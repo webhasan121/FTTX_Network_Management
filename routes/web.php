@@ -9,10 +9,13 @@ use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NetworkMapController;
 use App\Http\Controllers\OltController;
 use App\Http\Controllers\OnuController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PonPortController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SplitterController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -63,6 +66,16 @@ Route::middleware(['auth', 'verified'])->group(function () use ($networkSections
         '/global-search',
         GlobalSearchController::class
     )->name('global-search');
+
+
+    Route::resource('permissions', PermissionController::class);
+    Route::resource('roles', RoleController::class)
+        ->except(['show']);
+
+    Route::resource('users', UserManagementController::class)
+        ->except(['show']);
+
+
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

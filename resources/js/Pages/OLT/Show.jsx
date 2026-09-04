@@ -1,10 +1,11 @@
-import Button from '@/Components/UI/Button';
-import Card from '@/Components/UI/Card';
-import EmptyState from '@/Components/UI/EmptyState';
-import PageHeader from '@/Components/UI/PageHeader';
-import StatusBadge from '@/Components/UI/StatusBadge';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import Button from "@/Components/UI/Button";
+import Card from "@/Components/UI/Card";
+import EmptyState from "@/Components/UI/EmptyState";
+import PageHeader from "@/Components/UI/PageHeader";
+import StatusBadge from "@/Components/UI/StatusBadge";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head, router } from "@inertiajs/react";
+import usePermission from "@/Hooks/usePermission";
 import {
     ArrowLeft,
     Cable,
@@ -13,34 +14,41 @@ import {
     Pencil,
     Server,
     Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
 const statusTone = {
-    online: 'online',
-    offline: 'offline',
-    maintenance: 'maintenance',
-    active: 'online',
-    disabled: 'offline',
+    online: "online",
+    offline: "offline",
+    maintenance: "maintenance",
+    active: "online",
+    disabled: "offline",
 };
 
 function formatNumber(value) {
     return Number(value ?? 0).toLocaleString();
 }
 
-function detailValue(value, fallback = 'Not set') {
-    return value === null || value === undefined || value === '' ? fallback : value;
+function detailValue(value, fallback = "Not set") {
+    return value === null || value === undefined || value === ""
+        ? fallback
+        : value;
 }
 
 function DetailItem({ label, value }) {
     return (
         <div>
-            <dt className="text-xs font-semibold uppercase text-zinc-500">{label}</dt>
-            <dd className="mt-2 text-sm font-medium text-zinc-950">{detailValue(value)}</dd>
+            <dt className="text-xs font-semibold uppercase text-zinc-500">
+                {label}
+            </dt>
+            <dd className="mt-2 text-sm font-medium text-zinc-950">
+                {detailValue(value)}
+            </dd>
         </div>
     );
 }
 
 export default function Show({ olt }) {
+    const { can } = usePermission();
     function deleteOlt() {
         const confirmed = window.confirm(
             `Delete ${olt.code}? This will also remove connected PON topology records linked to this OLT.`,
@@ -50,7 +58,7 @@ export default function Show({ olt }) {
             return;
         }
 
-        router.delete(route('olts.destroy', olt.id));
+        router.delete(route("olts.destroy", olt.id));
     }
 
     return (
@@ -63,10 +71,13 @@ export default function Show({ olt }) {
             <PageHeader
                 eyebrow="Optical Line Terminals"
                 title={olt.name}
-                description={olt.description || 'Review OLT device identity, location, status, and downstream PON ports.'}
+                description={
+                    olt.description ||
+                    "Review OLT device identity, location, status, and downstream PON ports."
+                }
                 meta={
                     <>
-                        <StatusBadge tone={statusTone[olt.status] ?? 'neutral'}>
+                        <StatusBadge tone={statusTone[olt.status] ?? "neutral"}>
                             {olt.status_label}
                         </StatusBadge>
                         <StatusBadge tone="neutral">{olt.code}</StatusBadge>
@@ -77,20 +88,32 @@ export default function Show({ olt }) {
                         <Button
                             variant="secondary"
                             icon={ArrowLeft}
-                            onClick={() => router.visit(route('olts.index'))}
+                            onClick={() => router.visit(route("olts.index"))}
                         >
                             Back
                         </Button>
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() => router.visit(route('olts.edit', olt.id))}
-                        >
-                            Edit
-                        </Button>
-                        <Button variant="danger" icon={Trash2} onClick={deleteOlt}>
-                            Delete
-                        </Button>
+
+                        {can("olt.update") && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(route("olts.edit", olt.id))
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
+
+                        {can("olt.delete") && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={deleteOlt}
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />
@@ -106,11 +129,18 @@ export default function Show({ olt }) {
                         <DetailItem label="Code" value={olt.code} />
                         <DetailItem label="Vendor" value={olt.vendor} />
                         <DetailItem label="Model" value={olt.model} />
-                        <DetailItem label="Management IP" value={olt.ip_address} />
+                        <DetailItem
+                            label="Management IP"
+                            value={olt.ip_address}
+                        />
                         <div>
-                            <dt className="text-xs font-semibold uppercase text-zinc-500">Status</dt>
+                            <dt className="text-xs font-semibold uppercase text-zinc-500">
+                                Status
+                            </dt>
                             <dd className="mt-2">
-                                <StatusBadge tone={statusTone[olt.status] ?? 'neutral'}>
+                                <StatusBadge
+                                    tone={statusTone[olt.status] ?? "neutral"}
+                                >
                                     {olt.status_label}
                                 </StatusBadge>
                             </dd>
@@ -124,7 +154,7 @@ export default function Show({ olt }) {
                     icon={Cable}
                 >
                     <div className="space-y-5">
-                        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                        <div className="p-4 border rounded-lg border-zinc-200 bg-zinc-50">
                             <p className="text-xs font-semibold uppercase text-zinc-500">
                                 Total PON Ports
                             </p>
@@ -132,7 +162,7 @@ export default function Show({ olt }) {
                                 {formatNumber(olt.total_pon_ports)}
                             </p>
                         </div>
-                        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+                        <div className="p-4 bg-white border rounded-lg border-zinc-200">
                             <p className="text-xs font-semibold uppercase text-zinc-500">
                                 Connected PON Ports
                             </p>
@@ -151,11 +181,17 @@ export default function Show({ olt }) {
                     icon={MapPin}
                 >
                     <dl className="space-y-5">
-                        <DetailItem label="Location Name" value={olt.location_name} />
+                        <DetailItem
+                            label="Location Name"
+                            value={olt.location_name}
+                        />
                         <DetailItem label="Latitude" value={olt.latitude} />
                         <DetailItem label="Longitude" value={olt.longitude} />
                         <DetailItem label="Created" value={olt.created_at} />
-                        <DetailItem label="Last Updated" value={olt.updated_at} />
+                        <DetailItem
+                            label="Last Updated"
+                            value={olt.updated_at}
+                        />
                     </dl>
                 </Card>
 
@@ -170,42 +206,51 @@ export default function Show({ olt }) {
                             <table className="min-w-full divide-y divide-zinc-200">
                                 <thead className="bg-zinc-50">
                                     <tr>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Port
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Number
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Capacity
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Status
                                         </th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-zinc-500">
+                                        <th className="px-5 py-3 text-xs font-semibold text-left uppercase text-zinc-500">
                                             Description
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-200 bg-white">
+                                <tbody className="bg-white divide-y divide-zinc-200">
                                     {olt.pon_ports.map((ponPort) => (
                                         <tr key={ponPort.id}>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-zinc-950">
+                                            <td className="px-5 py-4 text-sm font-semibold whitespace-nowrap text-zinc-950">
                                                 {ponPort.name}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm text-zinc-700">
+                                            <td className="px-5 py-4 text-sm whitespace-nowrap text-zinc-700">
                                                 {ponPort.port_number}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4 text-sm text-zinc-700">
+                                            <td className="px-5 py-4 text-sm whitespace-nowrap text-zinc-700">
                                                 {formatNumber(ponPort.capacity)}
                                             </td>
-                                            <td className="whitespace-nowrap px-5 py-4">
-                                                <StatusBadge tone={statusTone[ponPort.status] ?? 'neutral'}>
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <StatusBadge
+                                                    tone={
+                                                        statusTone[
+                                                            ponPort.status
+                                                        ] ?? "neutral"
+                                                    }
+                                                >
                                                     {ponPort.status}
                                                 </StatusBadge>
                                             </td>
-                                            <td className="min-w-72 px-5 py-4 text-sm text-zinc-500">
-                                                {detailValue(ponPort.description, 'No description')}
+                                            <td className="px-5 py-4 text-sm min-w-72 text-zinc-500">
+                                                {detailValue(
+                                                    ponPort.description,
+                                                    "No description",
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

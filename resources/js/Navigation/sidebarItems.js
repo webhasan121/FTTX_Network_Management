@@ -1,7 +1,7 @@
 import {
-    Box,
     Cable,
     GitBranch,
+    KeyRound,
     LayoutDashboard,
     Map,
     MapPinned,
@@ -9,65 +9,94 @@ import {
     Radio,
     Server,
     Settings,
-    TriangleAlert,
+    ShieldCheck,
     UserCog,
+    TriangleAlert,
     Users,
-} from 'lucide-react';
-
+} from "lucide-react";
 export const sidebarItems = [
     {
         label: 'Dashboard',
         route: 'dashboard',
         icon: LayoutDashboard,
+        permission: 'dashboard.view',
     },
     {
         label: 'OLTs',
         route: 'olts.index',
         icon: Server,
+        permission: 'olt.view',
     },
     {
         label: 'PON Ports',
         route: 'pon-ports.index',
         icon: Cable,
+        permission: 'pon.view',
     },
     {
         label: 'Splitters',
         route: 'splitters.index',
         icon: GitBranch,
+        permission: 'splitter.view',
     },
     {
         label: 'Distribution Points',
         route: 'distribution-points.index',
         icon: MapPinned,
+        permission: 'distribution-point.view',
     },
     {
         label: 'ONU / ONT',
         route: 'onu-ont.index',
         icon: Radio,
+        permission: 'onu.view',
     },
     {
         label: 'Customers',
         route: 'customers.index',
         icon: Users,
+        permission: 'customer.view',
     },
     {
         label: 'Connections',
         route: 'connections.index',
         icon: Network,
+        permission: 'connection.view',
     },
     {
         label: 'Network Map',
         route: 'network-map.index',
         icon: Map,
+        permission: 'network-map.view',
     },
     {
         label: 'Faults',
         route: 'faults.index',
         icon: TriangleAlert,
+        permission: 'fault.view',
+    },
+    {
+        label: 'Users',
+        route: 'users.index',
+        icon: UserCog,
+        permission: 'user.view',
+    },
+    {
+        label: 'Roles',
+        route: 'roles.index',
+        icon: ShieldCheck,
+        permission: 'role.view',
+    },
+    {
+        label: 'Permissions',
+        route: 'permissions.index',
+        icon: KeyRound,
+        permission: 'permission.view',
     },
     {
         label: 'Settings',
         route: 'settings.index',
         icon: Settings,
+        permission: 'settings.view',
     },
 ];
