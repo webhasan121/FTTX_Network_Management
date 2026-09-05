@@ -133,7 +133,7 @@ export default function Index({ customers, filters, statuses }) {
                 title="Customer Management"
                 description="Manage subscriber information, contact details, service areas, and network connection status."
                 actions={
-                    can("customer.view") ? (
+                    can("customer.create") ? (
                         <Button
                             variant="primary"
                             icon={Plus}
@@ -369,10 +369,21 @@ export default function Index({ customers, filters, statuses }) {
                         <EmptyState
                             icon={Users}
                             title="No customers found"
-                            description="No customer matched the current search or filters."
-                            actionLabel="Add Customer"
-                            onAction={() =>
-                                router.visit(route("customers.create"))
+                            description={
+                                can("customer.create")
+                                    ? "No customer matched the current search or filters."
+                                    : "No customer matched the current search or filters."
+                            }
+                            actionLabel={
+                                can("customer.create")
+                                    ? "Add Customer"
+                                    : undefined
+                            }
+                            onAction={
+                                can("customer.create")
+                                    ? () =>
+                                          router.visit(route("customers.create"))
+                                    : undefined
                             }
                         />
                     </div>

@@ -69,11 +69,51 @@ class OltService
             )
             ->when(
                 $status !== '',
-                fn (Builder $query): Builder =>
-                    $query->where('status', $status)
+                fn(Builder $query): Builder =>
+                $query->where('status', $status)
             )
             ->latest('updated_at')
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function show(Olt $olt): Olt
+    {
+        $olt->loadCount('ponPorts');
+
+        $olt->load([
+            'ponPorts' => function ($query): void {
+                $query
+                    ->select([
+                        'id',
+                        'olt_id',
+                        'name',
+                        'port_number',
+                        'capacity',
+                        'status',
+                        'description',
+                    ])
+                    ->orderBy('port_number');
+            },
+        ]);
+
+        return $olt;
+    }
+
+    public function store(array $data): Olt
+    {
+        return Olt::create($data);
+    }
+
+    public function update(Olt $olt, array $data): Olt
+    {
+        $olt->update($data);
+
+        return $olt->refresh();
+    }
+
+    public function destroy(Olt $olt): void
+    {
+        $olt->delete();
     }
 }

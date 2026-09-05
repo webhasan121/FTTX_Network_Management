@@ -4,6 +4,7 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PageHeader from '@/Components/UI/PageHeader';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     KeyRound,
     Pencil,
@@ -15,6 +16,7 @@ import {
 import { useState } from 'react';
 
 export default function Index({ permissions }) {
+    const { can } = usePermission();
     const [editingId, setEditingId] = useState(null);
     const [editingName, setEditingName] = useState('');
 
@@ -92,53 +94,55 @@ export default function Index({ permissions }) {
             />
 
             {/* Create Permission */}
-            <Card
-                className="mt-6"
-                icon={KeyRound}
-                title="Create Permission"
-            >
-                <form
-                    onSubmit={submit}
-                    className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+            {can('permission.create') && (
+                <Card
+                    className="mt-6"
+                    icon={KeyRound}
+                    title="Create Permission"
                 >
-                    <div>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(event) =>
-                                setData('name', event.target.value)
-                            }
-                            placeholder="Example: olt.create"
-                            className="h-10 w-full rounded-lg border-zinc-300 text-sm text-zinc-900 shadow-sm focus:border-teal-500 focus:ring-teal-500"
-                        />
+                    <form
+                        onSubmit={submit}
+                        className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+                    >
+                        <div>
+                            <input
+                                type="text"
+                                value={data.name}
+                                onChange={(event) =>
+                                    setData('name', event.target.value)
+                                }
+                                placeholder="Example: olt.create"
+                                className="h-10 w-full rounded-lg border-zinc-300 text-sm text-zinc-900 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                            />
 
-                        {errors.name && (
-                            <p className="mt-2 text-sm font-medium text-red-600">
-                                {errors.name}
+                            {errors.name && (
+                                <p className="mt-2 text-sm font-medium text-red-600">
+                                    {errors.name}
+                                </p>
+                            )}
+
+                            <p className="mt-2 text-xs text-zinc-500">
+                                Recommended format: module.action
+                                — for example olt.view, onu.create,
+                                customer.update.
                             </p>
-                        )}
+                        </div>
 
-                        <p className="mt-2 text-xs text-zinc-500">
-                            Recommended format: module.action
-                            — for example olt.view, onu.create,
-                            customer.update.
-                        </p>
-                    </div>
-
-                    <div>
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            icon={Plus}
-                            disabled={processing}
-                        >
-                            {processing
-                                ? 'Creating...'
-                                : 'Add Permission'}
-                        </Button>
-                    </div>
-                </form>
-            </Card>
+                        <div>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                icon={Plus}
+                                disabled={processing}
+                            >
+                                {processing
+                                    ? 'Creating...'
+                                    : 'Add Permission'}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+            )}
 
             {/* Permission List */}
             <Card
@@ -224,20 +228,22 @@ export default function Index({ permissions }) {
                                                     {editingId ===
                                                     permission.id ? (
                                                         <>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="primary"
-                                                                icon={
+                                                            {can('permission.update') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="primary"
+                                                                    icon={
+                                                                        Save
+                                                                    }
+                                                                    onClick={() =>
+                                                                        updatePermission(
+                                                                            permission,
+                                                                        )
+                                                                    }
+                                                                >
                                                                     Save
-                                                                }
-                                                                onClick={() =>
-                                                                    updatePermission(
-                                                                        permission,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Save
-                                                            </Button>
+                                                                </Button>
+                                                            )}
 
                                                             <Button
                                                                 size="sm"
@@ -252,35 +258,39 @@ export default function Index({ permissions }) {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="secondary"
-                                                                icon={
-                                                                    Pencil
-                                                                }
-                                                                onClick={() =>
-                                                                    startEdit(
-                                                                        permission,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Edit
-                                                            </Button>
+                                                            {can('permission.update') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="secondary"
+                                                                    icon={
+                                                                        Pencil
+                                                                    }
+                                                                    onClick={() =>
+                                                                        startEdit(
+                                                                            permission,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                            )}
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="danger"
-                                                                icon={
-                                                                    Trash2
-                                                                }
-                                                                onClick={() =>
-                                                                    deletePermission(
-                                                                        permission,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Delete
-                                                            </Button>
+                                                            {can('permission.delete') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="danger"
+                                                                    icon={
+                                                                        Trash2
+                                                                    }
+                                                                    onClick={() =>
+                                                                        deletePermission(
+                                                                            permission,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Delete
+                                                                </Button>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -301,7 +311,11 @@ export default function Index({ permissions }) {
                         <EmptyState
                             icon={KeyRound}
                             title="No permissions found"
-                            description="Create your first permission to start building role-based access control."
+                            description={
+                                can('permission.create')
+                                    ? 'Create your first permission to start building role-based access control.'
+                                    : 'No permissions are available.'
+                            }
                         />
                     </div>
                 )}

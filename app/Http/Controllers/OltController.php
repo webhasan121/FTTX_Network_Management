@@ -89,9 +89,14 @@ class OltController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+
     public function store(StoreOltRequest $request): RedirectResponse
     {
-        $olt = Olt::create($request->validated());
+        Gate::authorize('create', Olt::class);
+        $olt = $this->oltService->store(
+            $request->validated()
+        );
 
         return redirect()
             ->route('olts.show', $olt)
@@ -105,22 +110,7 @@ class OltController extends Controller
     {
         Gate::authorize('view', $olt);
 
-        $olt->loadCount('ponPorts');
-        $olt->load([
-            'ponPorts' => function ($query): void {
-                $query
-                    ->select([
-                        'id',
-                        'olt_id',
-                        'name',
-                        'port_number',
-                        'capacity',
-                        'status',
-                        'description',
-                    ])
-                    ->orderBy('port_number');
-            },
-        ]);
+        $olt = $this->oltService->show($olt);
 
         return Inertia::render('OLT/Show', [
             'olt' => $this->showData($olt),
@@ -143,9 +133,17 @@ class OltController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateOltRequest $request, Olt $olt): RedirectResponse
-    {
-        $olt->update($request->validated());
+    public function update(
+        UpdateOltRequest $request,
+        Olt $olt
+    ): RedirectResponse {
+
+        Gate::authorize('update', $olt);
+
+        $olt = $this->oltService->update(
+            $olt,
+            $request->validated()
+        );
 
         return redirect()
             ->route('olts.show', $olt)
@@ -159,7 +157,7 @@ class OltController extends Controller
     {
         Gate::authorize('delete', $olt);
 
-        $olt->delete();
+        $this->oltService->destroy($olt);
 
         return redirect()
             ->route('olts.index')

@@ -5,6 +5,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Pencil,
     Plus,
@@ -82,6 +83,7 @@ export default function Index({
     users,
     filters,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters?.search ?? '',
     );
@@ -143,17 +145,19 @@ export default function Index({
                 title="User Management"
                 description="Create and manage staff accounts, assign roles, and control system access."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route('users.create'),
-                            )
-                        }
-                    >
-                        Add User
-                    </Button>
+                    can('user.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route('users.create'),
+                                )
+                            }
+                        >
+                            Add User
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -285,25 +289,27 @@ export default function Index({
 
                                                 <td className="whitespace-nowrap px-5 py-4">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={
-                                                                Pencil
-                                                            }
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'users.edit',
-                                                                        user.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </Button>
+                                                        {can('user.update') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={
+                                                                    Pencil
+                                                                }
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'users.edit',
+                                                                            user.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
 
-                                                        {!user.is_admin && (
+                                                        {can('user.delete') && !user.is_admin && (
                                                             <Button
                                                                 size="sm"
                                                                 variant="danger"
@@ -353,14 +359,25 @@ export default function Index({
                         <EmptyState
                             icon={UserCog}
                             title="No users found"
-                            description="Create a system user or adjust the current search filter."
-                            actionLabel="Add User"
-                            onAction={() =>
-                                router.visit(
-                                    route(
-                                        'users.create',
-                                    ),
-                                )
+                            description={
+                                can('user.create')
+                                    ? 'Create a system user or adjust the current search filter.'
+                                    : 'Adjust the current search filter.'
+                            }
+                            actionLabel={
+                                can('user.create')
+                                    ? 'Add User'
+                                    : undefined
+                            }
+                            onAction={
+                                can('user.create')
+                                    ? () =>
+                                          router.visit(
+                                              route(
+                                                  'users.create',
+                                              ),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>

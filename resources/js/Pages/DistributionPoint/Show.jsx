@@ -6,6 +6,7 @@ import ProgressBar from '@/Components/UI/ProgressBar';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     ArrowLeft,
     Box,
@@ -56,6 +57,8 @@ function DetailItem({
 export default function Show({
     point,
 }) {
+    const { can } = usePermission();
+
     function deletePoint() {
         const confirmed = window.confirm(
             `Delete ${point.code}? Distribution points with connected ONUs cannot be deleted.`,
@@ -118,28 +121,32 @@ export default function Show({
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(
-                                    route(
-                                        'distribution-points.edit',
-                                        point.id,
-                                    ),
-                                )
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can('distribution-point.update') && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(
+                                        route(
+                                            'distribution-points.edit',
+                                            point.id,
+                                        ),
+                                    )
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={deletePoint}
-                        >
-                            Delete
-                        </Button>
+                        {can('distribution-point.delete') && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={deletePoint}
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />

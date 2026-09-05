@@ -3,10 +3,12 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import OltForm from './Partials/OltForm';
 
 export default function Edit({ olt, statuses }) {
+    const { can } = usePermission();
     const statusLabel = statuses.find((status) => status.value === olt.status)?.label ?? olt.status;
 
     return (
@@ -22,13 +24,15 @@ export default function Edit({ olt, statuses }) {
                 description="Update device identity, management reachability, location coordinates, and status."
                 meta={<StatusBadge tone={olt.status}>{statusLabel}</StatusBadge>}
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() => router.visit(route('olts.show', olt.id))}
-                    >
-                        Back to OLT
-                    </Button>
+                    can('olt.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() => router.visit(route('olts.show', olt.id))}
+                        >
+                            Back to OLT
+                        </Button>
+                    ) : null
                 }
             />
 

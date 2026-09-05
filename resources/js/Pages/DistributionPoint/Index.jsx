@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Box,
     Eye,
@@ -71,6 +72,7 @@ export default function Index({
     splitters,
     types,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters?.search ?? '',
     );
@@ -151,19 +153,21 @@ export default function Index({
                 title="Distribution Point Management"
                 description="Manage downstream fiber distribution nodes, port utilization, splitter assignments, and field locations."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'distribution-points.create',
-                                ),
-                            )
-                        }
-                    >
-                        Add Distribution Point
-                    </Button>
+                    can('distribution-point.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'distribution-points.create',
+                                    ),
+                                )
+                            }
+                        >
+                            Add Distribution Point
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -395,56 +399,62 @@ export default function Index({
 
                                                 <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={
-                                                                Eye
-                                                            }
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'distribution-points.show',
-                                                                        point.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            View
-                                                        </Button>
+                                                        {can('distribution-point.view') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={
+                                                                    Eye
+                                                                }
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'distribution-points.show',
+                                                                            point.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                View
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={
-                                                                Pencil
-                                                            }
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'distribution-points.edit',
-                                                                        point.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </Button>
+                                                        {can('distribution-point.update') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={
+                                                                    Pencil
+                                                                }
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'distribution-points.edit',
+                                                                            point.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="danger"
-                                                            icon={
-                                                                Trash2
-                                                            }
-                                                            onClick={() =>
-                                                                deletePoint(
-                                                                    point,
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        {can('distribution-point.delete') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="danger"
+                                                                icon={
+                                                                    Trash2
+                                                                }
+                                                                onClick={() =>
+                                                                    deletePoint(
+                                                                        point,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -462,13 +472,20 @@ export default function Index({
                             icon={Box}
                             title="No distribution points found"
                             description="No distribution point matched the current search or filters."
-                            actionLabel="Add Distribution Point"
-                            onAction={() =>
-                                router.visit(
-                                    route(
-                                        'distribution-points.create',
-                                    ),
-                                )
+                            actionLabel={
+                                can('distribution-point.create')
+                                    ? 'Add Distribution Point'
+                                    : undefined
+                            }
+                            onAction={
+                                can('distribution-point.create')
+                                    ? () =>
+                                          router.visit(
+                                              route(
+                                                  'distribution-points.create',
+                                              ),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>

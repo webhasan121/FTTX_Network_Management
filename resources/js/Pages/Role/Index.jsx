@@ -4,6 +4,7 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PageHeader from '@/Components/UI/PageHeader';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Pencil,
     Plus,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function Index({ roles }) {
+    const { can } = usePermission();
     function deleteRole(role) {
         if (role.name === 'admin') {
             return;
@@ -45,15 +47,17 @@ export default function Index({ roles }) {
                 title="Role Management"
                 description="Create roles and control which permissions each role can access."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(route('roles.create'))
-                        }
-                    >
-                        Add Role
-                    </Button>
+                    can('role.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(route('roles.create'))
+                            }
+                        >
+                            Add Role
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -116,34 +120,38 @@ export default function Index({ roles }) {
                                                 </p>
                                             ) : (
                                                 <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        icon={Pencil}
-                                                        onClick={() =>
-                                                            router.visit(
-                                                                route(
-                                                                    'roles.edit',
-                                                                    role.id,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                    {can('role.update') && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            icon={Pencil}
+                                                            onClick={() =>
+                                                                router.visit(
+                                                                    route(
+                                                                        'roles.edit',
+                                                                        role.id,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
 
-                                                    <Button
-                                                        size="sm"
-                                                        variant="danger"
-                                                        icon={Trash2}
-                                                        onClick={() =>
-                                                            deleteRole(
-                                                                role,
-                                                            )
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </Button>
+                                                    {can('role.delete') && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="danger"
+                                                            icon={Trash2}
+                                                            onClick={() =>
+                                                                deleteRole(
+                                                                    role,
+                                                                )
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             )}
                                         </td>
@@ -157,10 +165,21 @@ export default function Index({ roles }) {
                         <EmptyState
                             icon={ShieldCheck}
                             title="No roles found"
-                            description="Create a role and assign permissions to it."
-                            actionLabel="Add Role"
-                            onAction={() =>
-                                router.visit(route('roles.create'))
+                            description={
+                                can('role.create')
+                                    ? 'Create a role and assign permissions to it.'
+                                    : 'No roles are available.'
+                            }
+                            actionLabel={
+                                can('role.create')
+                                    ? 'Add Role'
+                                    : undefined
+                            }
+                            onAction={
+                                can('role.create')
+                                    ? () =>
+                                          router.visit(route('roles.create'))
+                                    : undefined
                             }
                         />
                     </div>

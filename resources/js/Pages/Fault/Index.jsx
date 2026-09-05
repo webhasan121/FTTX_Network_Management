@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     AlertTriangle,
     Eye,
@@ -85,6 +86,7 @@ export default function Index({
     severities,
     faultTypes,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters?.search ?? '',
     );
@@ -168,17 +170,19 @@ export default function Index({
                 title="Fault Management"
                 description="Report, prioritize, assign, track, and resolve faults across OLT, PON, distribution, and ONU infrastructure."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route('faults.create'),
-                            )
-                        }
-                    >
-                        Report Fault
-                    </Button>
+                    can('fault.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route('faults.create'),
+                                )
+                            }
+                        >
+                            Report Fault
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -438,50 +442,56 @@ export default function Index({
 
                                                 <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={Eye}
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'faults.show',
-                                                                        fault.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            View
-                                                        </Button>
+                                                        {can('fault.view') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={Eye}
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'faults.show',
+                                                                            fault.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                View
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={Pencil}
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'faults.edit',
-                                                                        fault.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </Button>
+                                                        {can('fault.update') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={Pencil}
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'faults.edit',
+                                                                            fault.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="danger"
-                                                            icon={Trash2}
-                                                            onClick={() =>
-                                                                deleteFault(
-                                                                    fault,
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        {can('fault.delete') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="danger"
+                                                                icon={Trash2}
+                                                                onClick={() =>
+                                                                    deleteFault(
+                                                                        fault,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -501,11 +511,18 @@ export default function Index({
                             icon={AlertTriangle}
                             title="No faults found"
                             description="No network faults matched the current filters."
-                            actionLabel="Report Fault"
-                            onAction={() =>
-                                router.visit(
-                                    route('faults.create'),
-                                )
+                            actionLabel={
+                                can('fault.create')
+                                    ? 'Report Fault'
+                                    : undefined
+                            }
+                            onAction={
+                                can('fault.create')
+                                    ? () =>
+                                          router.visit(
+                                              route('faults.create'),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>

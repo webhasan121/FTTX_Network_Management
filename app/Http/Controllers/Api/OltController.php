@@ -9,6 +9,9 @@ use App\Services\OltService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\JsonResponse;
+use App\Http\Requests\StoreOltRequest;
+use App\Http\Requests\UpdateOltRequest;
 
 class OltController extends Controller
 {
@@ -20,8 +23,7 @@ class OltController extends Controller
 
     public function __construct(
         private readonly OltService $oltService
-    ) {
-    }
+    ) {}
 
     public function index(
         Request $request
@@ -52,5 +54,59 @@ class OltController extends Controller
         );
 
         return OltResource::collection($olts);
+    }
+
+    public function show(Olt $olt): OltResource
+    {
+        Gate::authorize('view', $olt);
+
+        $olt = $this->oltService->show($olt);
+
+        return new OltResource($olt);
+    }
+    public function store(StoreOltRequest $request): JsonResponse
+    {
+        Gate::authorize('create', Olt::class);
+
+        $olt = $this->oltService->store(
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OLT created successfully.',
+            'data' => new OltResource($olt),
+        ], 201);
+    }
+
+
+    public function update(
+        UpdateOltRequest $request,
+        Olt $olt
+    ): JsonResponse {
+        Gate::authorize('update', $olt);
+
+        $olt = $this->oltService->update(
+            $olt,
+            $request->validated()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OLT updated successfully.',
+            'data' => new OltResource($olt),
+        ]);
+    }
+
+    public function destroy(Olt $olt): JsonResponse
+    {
+        Gate::authorize('delete', $olt);
+
+        $this->oltService->destroy($olt);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OLT deleted successfully.',
+        ]);
     }
 }

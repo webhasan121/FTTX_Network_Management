@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Cable,
     Eye,
@@ -84,6 +85,7 @@ export default function Index({
     statuses,
     customers,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters?.search ?? '',
     );
@@ -164,19 +166,21 @@ export default function Index({
                 title="Connection Management"
                 description="Link customers with ONU / ONT devices and review the complete FTTX service path."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'connections.create',
-                                ),
-                            )
-                        }
-                    >
-                        Add Connection
-                    </Button>
+                    can('connection.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'connections.create',
+                                    ),
+                                )
+                            }
+                        >
+                            Add Connection
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -446,56 +450,62 @@ export default function Index({
 
                                                     <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
                                                         <div className="flex justify-end gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="secondary"
-                                                                icon={
-                                                                    Eye
-                                                                }
-                                                                onClick={() =>
-                                                                    router.visit(
-                                                                        route(
-                                                                            'connections.show',
-                                                                            connection.id,
-                                                                        ),
-                                                                    )
-                                                                }
-                                                            >
-                                                                View
-                                                            </Button>
+                                                            {can('connection.view') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="secondary"
+                                                                    icon={
+                                                                        Eye
+                                                                    }
+                                                                    onClick={() =>
+                                                                        router.visit(
+                                                                            route(
+                                                                                'connections.show',
+                                                                                connection.id,
+                                                                            ),
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    View
+                                                                </Button>
+                                                            )}
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="secondary"
-                                                                icon={
-                                                                    Pencil
-                                                                }
-                                                                onClick={() =>
-                                                                    router.visit(
-                                                                        route(
-                                                                            'connections.edit',
-                                                                            connection.id,
-                                                                        ),
-                                                                    )
-                                                                }
-                                                            >
-                                                                Edit
-                                                            </Button>
+                                                            {can('connection.update') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="secondary"
+                                                                    icon={
+                                                                        Pencil
+                                                                    }
+                                                                    onClick={() =>
+                                                                        router.visit(
+                                                                            route(
+                                                                                'connections.edit',
+                                                                                connection.id,
+                                                                            ),
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                            )}
 
-                                                            <Button
-                                                                size="sm"
-                                                                variant="danger"
-                                                                icon={
-                                                                    Trash2
-                                                                }
-                                                                onClick={() =>
-                                                                    deleteConnection(
-                                                                        connection,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Delete
-                                                            </Button>
+                                                            {can('connection.delete') && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="danger"
+                                                                    icon={
+                                                                        Trash2
+                                                                    }
+                                                                    onClick={() =>
+                                                                        deleteConnection(
+                                                                            connection,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Delete
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -516,13 +526,20 @@ export default function Index({
                             icon={Cable}
                             title="No connections found"
                             description="No FTTX connection matched the current search or filters."
-                            actionLabel="Add Connection"
-                            onAction={() =>
-                                router.visit(
-                                    route(
-                                        'connections.create',
-                                    ),
-                                )
+                            actionLabel={
+                                can('connection.create')
+                                    ? 'Add Connection'
+                                    : undefined
+                            }
+                            onAction={
+                                can('connection.create')
+                                    ? () =>
+                                          router.visit(
+                                              route(
+                                                  'connections.create',
+                                              ),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>

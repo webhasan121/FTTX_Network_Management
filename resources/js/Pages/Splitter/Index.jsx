@@ -6,6 +6,7 @@ import StatusBadge from "@/Components/UI/StatusBadge";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { classNames } from "@/lib/utils";
 import { Head, Link, router } from "@inertiajs/react";
+import usePermission from '@/Hooks/usePermission';
 import {
     Eye,
     GitBranch,
@@ -64,6 +65,7 @@ function Pagination({ links }) {
 }
 
 export default function Index({ splitters, filters, ponPorts, ratios }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(filters?.search ?? "");
 
     const [ponPortId, setPonPortId] = useState(filters?.pon_port_id ?? "");
@@ -132,13 +134,15 @@ export default function Index({ splitters, filters, ponPorts, ratios }) {
                 title="Splitter Management"
                 description="Manage splitter ratios, upstream PON assignments, port utilization, and field locations."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() => router.visit(route("splitters.create"))}
-                    >
-                        Add Splitter
-                    </Button>
+                    can("splitter.create") ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() => router.visit(route("splitters.create"))}
+                        >
+                            Add Splitter
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -335,50 +339,56 @@ export default function Index({ splitters, filters, ponPorts, ratios }) {
                                                 {/* Actions */}
                                                 <td className="min-w-[250px] whitespace-nowrap px-5 py-4 align-middle">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={Eye}
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        "splitters.show",
-                                                                        splitter.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            View
-                                                        </Button>
+                                                        {can("splitter.view") && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={Eye}
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            "splitters.show",
+                                                                            splitter.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                View
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={Pencil}
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        "splitters.edit",
-                                                                        splitter.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </Button>
+                                                        {can("splitter.update") && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={Pencil}
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            "splitters.edit",
+                                                                            splitter.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="danger"
-                                                            icon={Trash2}
-                                                            onClick={() =>
-                                                                deleteSplitter(
-                                                                    splitter,
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        {can("splitter.delete") && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="danger"
+                                                                icon={Trash2}
+                                                                onClick={() =>
+                                                                    deleteSplitter(
+                                                                        splitter,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -395,10 +405,21 @@ export default function Index({ splitters, filters, ponPorts, ratios }) {
                         <EmptyState
                             icon={GitBranch}
                             title="No splitters found"
-                            description="No splitter matched the current search or filters. Reset the filters or add a new splitter."
-                            actionLabel="Add Splitter"
-                            onAction={() =>
-                                router.visit(route("splitters.create"))
+                            description={
+                                can("splitter.create")
+                                    ? "No splitter matched the current search or filters. Reset the filters or add a new splitter."
+                                    : "No splitter matched the current search or filters."
+                            }
+                            actionLabel={
+                                can("splitter.create")
+                                    ? "Add Splitter"
+                                    : undefined
+                            }
+                            onAction={
+                                can("splitter.create")
+                                    ? () =>
+                                          router.visit(route("splitters.create"))
+                                    : undefined
                             }
                         />
                     </div>

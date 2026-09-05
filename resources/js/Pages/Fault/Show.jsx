@@ -4,6 +4,7 @@ import PageHeader from "@/Components/UI/PageHeader";
 import StatusBadge from "@/Components/UI/StatusBadge";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
+import usePermission from '@/Hooks/usePermission';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -50,6 +51,7 @@ function DetailItem({ label, value }) {
 }
 
 export default function Show({ fault }) {
+    const { can } = usePermission();
     function deleteFault() {
         const confirmed = window.confirm(
             `Are you sure you want to delete "${fault.title}"?`,
@@ -112,23 +114,27 @@ export default function Show({ fault }) {
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(route("faults.edit", fault.id))
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can("fault.update") && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(route("faults.edit", fault.id))
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={deleteFault}
-                        >
-                            Delete
-                        </Button>
+                        {can("fault.delete") && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={deleteFault}
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />

@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Cable,
     Eye,
@@ -80,6 +81,7 @@ export default function Index({
     statuses,
     olts,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters.search ?? '',
     );
@@ -153,17 +155,19 @@ export default function Index({
                 title="PON Port Management"
                 description="Search, filter, review, and maintain PON interfaces connected to network OLTs."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route('pon-ports.create'),
-                            )
-                        }
-                    >
-                        Add PON Port
-                    </Button>
+                    can('pon.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route('pon-ports.create'),
+                                )
+                            }
+                        >
+                            Add PON Port
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -352,50 +356,56 @@ export default function Index({
 
                                             <td className="px-5 py-4 whitespace-nowrap">
                                                 <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        icon={Eye}
-                                                        onClick={() =>
-                                                            router.visit(
-                                                                route(
-                                                                    'pon-ports.show',
-                                                                    port.id,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        View
-                                                    </Button>
+                                                    {can('pon.view') && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            icon={Eye}
+                                                            onClick={() =>
+                                                                router.visit(
+                                                                    route(
+                                                                        'pon-ports.show',
+                                                                        port.id,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    )}
 
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        icon={Pencil}
-                                                        onClick={() =>
-                                                            router.visit(
-                                                                route(
-                                                                    'pon-ports.edit',
-                                                                    port.id,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        Edit
-                                                    </Button>
+                                                    {can('pon.update') && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            icon={Pencil}
+                                                            onClick={() =>
+                                                                router.visit(
+                                                                    route(
+                                                                        'pon-ports.edit',
+                                                                        port.id,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        >
+                                                            Edit
+                                                        </Button>
+                                                    )}
 
-                                                    <Button
-                                                        size="sm"
-                                                        variant="danger"
-                                                        icon={Trash2}
-                                                        onClick={() =>
-                                                            deletePort(
-                                                                port,
-                                                            )
-                                                        }
-                                                    >
-                                                        Delete
-                                                    </Button>
+                                                    {can('pon.delete') && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="danger"
+                                                            icon={Trash2}
+                                                            onClick={() =>
+                                                                deletePort(
+                                                                    port,
+                                                                )
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -413,14 +423,25 @@ export default function Index({
                         <EmptyState
                             icon={Cable}
                             title="No PON ports found"
-                            description="No PON ports matched the current search or filter. Reset the filters or create a new PON port."
-                            actionLabel="Add PON Port"
-                            onAction={() =>
-                                router.visit(
-                                    route(
-                                        'pon-ports.create',
-                                    ),
-                                )
+                            description={
+                                can('pon.create')
+                                    ? 'No PON ports matched the current search or filter. Reset the filters or create a new PON port.'
+                                    : 'No PON ports matched the current search or filter.'
+                            }
+                            actionLabel={
+                                can('pon.create')
+                                    ? 'Add PON Port'
+                                    : undefined
+                            }
+                            onAction={
+                                can('pon.create')
+                                    ? () =>
+                                          router.visit(
+                                              route(
+                                                  'pon-ports.create',
+                                              ),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>

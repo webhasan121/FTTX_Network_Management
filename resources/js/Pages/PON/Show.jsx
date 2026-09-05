@@ -6,6 +6,7 @@ import ProgressBar from '@/Components/UI/ProgressBar';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     ArrowLeft,
     Cable,
@@ -59,6 +60,8 @@ function DetailItem({
 export default function Show({
     port,
 }) {
+    const { can } = usePermission();
+
     function deletePort() {
         const confirmed =
             window.confirm(
@@ -128,30 +131,34 @@ export default function Show({
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(
-                                    route(
-                                        'pon-ports.edit',
-                                        port.id,
-                                    ),
-                                )
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can('pon.update') && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(
+                                        route(
+                                            'pon-ports.edit',
+                                            port.id,
+                                        ),
+                                    )
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={
-                                deletePort
-                            }
-                        >
-                            Delete
-                        </Button>
+                        {can('pon.delete') && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={
+                                    deletePort
+                                }
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />

@@ -3,6 +3,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import ConnectionForm from './Partials/ConnectionForm';
 
@@ -18,6 +19,8 @@ export default function Edit({
     onus,
     statuses,
 }) {
+    const { can } = usePermission();
+
     return (
         <AuthenticatedLayout
             title={`Edit ${connection.connection_code}`}
@@ -43,20 +46,22 @@ export default function Edit({
                     </StatusBadge>
                 }
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'connections.show',
-                                    connection.id,
-                                ),
-                            )
-                        }
-                    >
-                        Back to Connection
-                    </Button>
+                    can('connection.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'connections.show',
+                                        connection.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Back to Connection
+                        </Button>
+                    ) : null
                 }
             />
 

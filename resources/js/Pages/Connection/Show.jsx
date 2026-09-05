@@ -4,6 +4,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     ArrowLeft,
     ArrowRight,
@@ -94,6 +95,7 @@ function NetworkNode({
 export default function Show({
     connection,
 }) {
+    const { can } = usePermission();
     const path =
         connection.network_path ?? {};
 
@@ -185,30 +187,34 @@ export default function Show({
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(
-                                    route(
-                                        'connections.edit',
-                                        connection.id,
-                                    ),
-                                )
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can('connection.update') && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(
+                                        route(
+                                            'connections.edit',
+                                            connection.id,
+                                        ),
+                                    )
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={
-                                deleteConnection
-                            }
-                        >
-                            Delete
-                        </Button>
+                        {can('connection.delete') && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={
+                                    deleteConnection
+                                }
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />
@@ -336,20 +342,22 @@ export default function Show({
                                 </p>
                             </div>
 
-                            <Button
-                                variant="secondary"
-                                className="mt-4"
-                                onClick={() =>
-                                    router.visit(
-                                        route(
-                                            'onu-ont.show',
-                                            onu.id,
-                                        ),
-                                    )
-                                }
-                            >
-                                View ONU
-                            </Button>
+                            {can('onu.view') && (
+                                <Button
+                                    variant="secondary"
+                                    className="mt-4"
+                                    onClick={() =>
+                                        router.visit(
+                                            route(
+                                                'onu-ont.show',
+                                                onu.id,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    View ONU
+                                </Button>
+                            )}
                         </>
                     ) : (
                         <p className="text-sm text-zinc-500">
@@ -412,20 +420,22 @@ export default function Show({
                                 />
                             </dl>
 
-                            <Button
-                                variant="secondary"
-                                className="mt-5"
-                                onClick={() =>
-                                    router.visit(
-                                        route(
-                                            'customers.show',
-                                            customer.id,
-                                        ),
-                                    )
-                                }
-                            >
-                                View Customer
-                            </Button>
+                            {can('customer.view') && (
+                                <Button
+                                    variant="secondary"
+                                    className="mt-5"
+                                    onClick={() =>
+                                        router.visit(
+                                            route(
+                                                'customers.show',
+                                                customer.id,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    View Customer
+                                </Button>
+                            )}
                         </>
                     ) : (
                         <p className="text-sm text-zinc-500">

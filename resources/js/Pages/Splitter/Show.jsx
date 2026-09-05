@@ -6,6 +6,7 @@ import ProgressBar from '@/Components/UI/ProgressBar';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     ArrowLeft,
     Box,
@@ -48,6 +49,8 @@ function DetailItem({
 export default function Show({
     splitter,
 }) {
+    const { can } = usePermission();
+
     const availablePorts = Math.max(
         Number(splitter.total_ports ?? 0) -
             Number(splitter.used_ports ?? 0),
@@ -133,30 +136,34 @@ export default function Show({
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(
-                                    route(
-                                        'splitters.edit',
-                                        splitter.id,
-                                    ),
-                                )
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can('splitter.update') && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(
+                                        route(
+                                            'splitters.edit',
+                                            splitter.id,
+                                        ),
+                                    )
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={
-                                deleteSplitter
-                            }
-                        >
-                            Delete
-                        </Button>
+                        {can('splitter.delete') && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={
+                                    deleteSplitter
+                                }
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />

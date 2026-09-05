@@ -3,6 +3,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import DistributionPointForm from './Partials/DistributionPointForm';
 
@@ -11,6 +12,8 @@ export default function Edit({
     splitters,
     types,
 }) {
+    const { can } = usePermission();
+
     const typeLabel =
         types.find(
             (type) =>
@@ -42,20 +45,22 @@ export default function Edit({
                     </>
                 }
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'distribution-points.show',
-                                    point.id,
-                                ),
-                            )
-                        }
-                    >
-                        Back to Distribution Point
-                    </Button>
+                    can('distribution-point.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'distribution-points.show',
+                                        point.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Back to Distribution Point
+                        </Button>
+                    ) : null
                 }
             />
 

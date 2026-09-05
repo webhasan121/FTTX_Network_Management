@@ -3,6 +3,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import OnuForm from './Partials/OnuForm';
 
@@ -18,6 +19,8 @@ export default function Edit({
     statuses,
     distributionPoints,
 }) {
+    const { can } = usePermission();
+
     const statusLabel =
         statuses.find(
             (status) =>
@@ -49,20 +52,22 @@ export default function Edit({
                     </StatusBadge>
                 }
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'onu-ont.show',
-                                    onu.id,
-                                ),
-                            )
-                        }
-                    >
-                        Back to ONU
-                    </Button>
+                    can('onu.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'onu-ont.show',
+                                        onu.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Back to ONU
+                        </Button>
+                    ) : null
                 }
             />
 

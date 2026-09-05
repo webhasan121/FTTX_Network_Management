@@ -4,6 +4,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     ArrowDown,
     ArrowLeft,
@@ -143,6 +144,7 @@ function NetworkNode({
 export default function Show({
     onu,
 }) {
+    const { can } = usePermission();
     const path = onu.network_path ?? {};
 
     function deleteOnu() {
@@ -220,28 +222,32 @@ export default function Show({
                             Back
                         </Button>
 
-                        <Button
-                            variant="secondary"
-                            icon={Pencil}
-                            onClick={() =>
-                                router.visit(
-                                    route(
-                                        'onu-ont.edit',
-                                        onu.id,
-                                    ),
-                                )
-                            }
-                        >
-                            Edit
-                        </Button>
+                        {can('onu.update') && (
+                            <Button
+                                variant="secondary"
+                                icon={Pencil}
+                                onClick={() =>
+                                    router.visit(
+                                        route(
+                                            'onu-ont.edit',
+                                            onu.id,
+                                        ),
+                                    )
+                                }
+                            >
+                                Edit
+                            </Button>
+                        )}
 
-                        <Button
-                            variant="danger"
-                            icon={Trash2}
-                            onClick={deleteOnu}
-                        >
-                            Delete
-                        </Button>
+                        {can('onu.delete') && (
+                            <Button
+                                variant="danger"
+                                icon={Trash2}
+                                onClick={deleteOnu}
+                            >
+                                Delete
+                            </Button>
+                        )}
                     </>
                 }
             />

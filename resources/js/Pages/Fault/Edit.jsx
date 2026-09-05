@@ -3,6 +3,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import FaultForm from './Partials/FaultForm';
 
@@ -30,6 +31,8 @@ export default function Edit({
     onus,
     users,
 }) {
+    const { can } = usePermission();
+
     return (
         <AuthenticatedLayout
             title={`Edit ${fault.title}`}
@@ -65,20 +68,22 @@ export default function Edit({
                     </>
                 }
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'faults.show',
-                                    fault.id,
-                                ),
-                            )
-                        }
-                    >
-                        Back to Fault
-                    </Button>
+                    can('fault.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'faults.show',
+                                        fault.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Back to Fault
+                        </Button>
+                    ) : null
                 }
             />
 

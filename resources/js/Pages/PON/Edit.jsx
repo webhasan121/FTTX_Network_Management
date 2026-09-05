@@ -3,6 +3,7 @@ import PageHeader from '@/Components/UI/PageHeader';
 import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import { ArrowLeft } from 'lucide-react';
 import PonPortForm from './Partials/PonPortForm';
 
@@ -16,6 +17,8 @@ export default function Edit({
     olts,
     statuses,
 }) {
+    const { can } = usePermission();
+
     const statusLabel =
         statuses.find(
             (status) =>
@@ -47,20 +50,22 @@ export default function Edit({
                     </StatusBadge>
                 }
                 actions={
-                    <Button
-                        variant="secondary"
-                        icon={ArrowLeft}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'pon-ports.show',
-                                    port.id,
-                                ),
-                            )
-                        }
-                    >
-                        Back to PON Port
-                    </Button>
+                    can('pon.view') ? (
+                        <Button
+                            variant="secondary"
+                            icon={ArrowLeft}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'pon-ports.show',
+                                        port.id,
+                                    ),
+                                )
+                            }
+                        >
+                            Back to PON Port
+                        </Button>
+                    ) : null
                 }
             />
 

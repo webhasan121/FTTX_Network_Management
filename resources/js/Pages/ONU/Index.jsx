@@ -6,6 +6,7 @@ import StatusBadge from '@/Components/UI/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { classNames } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/react';
+import usePermission from '@/Hooks/usePermission';
 import {
     Eye,
     Pencil,
@@ -111,6 +112,7 @@ export default function Index({
     statuses,
     distributionPoints,
 }) {
+    const { can } = usePermission();
     const [search, setSearch] = useState(
         filters?.search ?? '',
     );
@@ -201,19 +203,21 @@ export default function Index({
                 title="ONU / ONT Management"
                 description="Manage optical units, network assignments, signal levels, operational status, and customer connections."
                 actions={
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() =>
-                            router.visit(
-                                route(
-                                    'onu-ont.create',
-                                ),
-                            )
-                        }
-                    >
-                        Add ONU / ONT
-                    </Button>
+                    can('onu.create') ? (
+                        <Button
+                            variant="primary"
+                            icon={Plus}
+                            onClick={() =>
+                                router.visit(
+                                    route(
+                                        'onu-ont.create',
+                                    ),
+                                )
+                            }
+                        >
+                            Add ONU / ONT
+                        </Button>
+                    ) : null
                 }
             />
 
@@ -499,56 +503,62 @@ export default function Index({
                                                 {/* Actions */}
                                                 <td className="min-w-[250px] whitespace-nowrap px-5 py-4">
                                                     <div className="flex justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={
-                                                                Eye
-                                                            }
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'onu-ont.show',
-                                                                        onu.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            View
-                                                        </Button>
+                                                        {can('onu.view') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={
+                                                                    Eye
+                                                                }
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'onu-ont.show',
+                                                                            onu.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                View
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="secondary"
-                                                            icon={
-                                                                Pencil
-                                                            }
-                                                            onClick={() =>
-                                                                router.visit(
-                                                                    route(
-                                                                        'onu-ont.edit',
-                                                                        onu.id,
-                                                                    ),
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </Button>
+                                                        {can('onu.update') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                icon={
+                                                                    Pencil
+                                                                }
+                                                                onClick={() =>
+                                                                    router.visit(
+                                                                        route(
+                                                                            'onu-ont.edit',
+                                                                            onu.id,
+                                                                        ),
+                                                                    )
+                                                                }
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
 
-                                                        <Button
-                                                            size="sm"
-                                                            variant="danger"
-                                                            icon={
-                                                                Trash2
-                                                            }
-                                                            onClick={() =>
-                                                                deleteOnu(
-                                                                    onu,
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        {can('onu.delete') && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="danger"
+                                                                icon={
+                                                                    Trash2
+                                                                }
+                                                                onClick={() =>
+                                                                    deleteOnu(
+                                                                        onu,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -567,14 +577,25 @@ export default function Index({
                         <EmptyState
                             icon={Radio}
                             title="No ONU / ONT found"
-                            description="No device matched the current search or filters."
-                            actionLabel="Add ONU / ONT"
-                            onAction={() =>
-                                router.visit(
-                                    route(
-                                        'onu-ont.create',
-                                    ),
-                                )
+                            description={
+                                can('onu.create')
+                                    ? 'No device matched the current search or filters.'
+                                    : 'No device matched the current search or filters.'
+                            }
+                            actionLabel={
+                                can('onu.create')
+                                    ? 'Add ONU / ONT'
+                                    : undefined
+                            }
+                            onAction={
+                                can('onu.create')
+                                    ? () =>
+                                          router.visit(
+                                              route(
+                                                  'onu-ont.create',
+                                              ),
+                                          )
+                                    : undefined
                             }
                         />
                     </div>
