@@ -33,7 +33,18 @@ Route::redirect('/', '/dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () use ($networkSections) {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/olts/trash', [OltController::class, 'trash'])
+        ->name('olts.trash');
+
+    Route::patch('/olts/{id}/restore', [OltController::class, 'restore'])
+        ->name('olts.restore');
+
+    Route::delete('/olts/{id}/force-delete', [OltController::class, 'forceDelete'])
+        ->name('olts.force-delete');
+
     Route::resource('olts', OltController::class);
+
+
     Route::resource('pon-ports', PonPortController::class);
     Route::resource('splitters', SplitterController::class);
     Route::resource('distribution-points', DistributionPointController::class);

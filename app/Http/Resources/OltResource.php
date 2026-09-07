@@ -17,13 +17,33 @@ class OltResource extends JsonResource
             'model' => $this->model,
             'ip_address' => $this->ip_address,
             'location_name' => $this->location_name,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
 
             'total_pon_ports' => $this->total_pon_ports,
-            'pon_ports_count' => $this->pon_ports_count,
+
+            'pon_ports_count' => $this->whenCounted('ponPorts'),
+
+            'pon_ports' => $this->whenLoaded(
+                'ponPorts',
+                fn () => $this->ponPorts->map(
+                    fn ($ponPort): array => [
+                        'id' => $ponPort->id,
+                        'name' => $ponPort->name,
+                        'port_number' => $ponPort->port_number,
+                        'capacity' => $ponPort->capacity,
+                        'status' => $ponPort->status,
+                        'description' => $ponPort->description,
+                    ]
+                )
+            ),
 
             'status' => $this->status,
+            'description' => $this->description,
 
+            'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
+            'deleted_at' => $this->deleted_at?->toISOString(),
         ];
     }
 }

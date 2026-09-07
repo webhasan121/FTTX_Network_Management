@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CannotDeleteOltException;
 use App\Models\Olt;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -114,6 +115,42 @@ class OltService
 
     public function destroy(Olt $olt): void
     {
+        if ($olt->ponPorts()->exists()) {
+            throw new CannotDeleteOltException(
+                'OLT cannot be moved to trash because it has connected PON ports.'
+            );
+        }
         $olt->delete();
+    }
+
+    public function trashed(
+        int $perPage = 10
+    ): LengthAwarePaginator {
+        return Olt::onlyTrashed()
+            ->latest('deleted_at')
+            ->paginate($perPage);
+    }
+
+    public function findTrashed(int $id): Olt
+    {
+        return Olt::onlyTrashed()
+            ->findOrFail($id);
+    }
+
+    public function restore(Olt $olt): Olt
+    {
+        $olt->restore();
+
+        return $olt->refresh();
+    }
+
+    public function forceDelete(Olt $olt): void
+    {
+        if ($olt->ponPorts()->exists()) {
+            throw new CannotDeleteOltException(
+                'OLT cannot be permanently deleted because it has connected PON ports.'
+            );
+        }
+        $olt->forceDelete();
     }
 }

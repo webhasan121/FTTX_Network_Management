@@ -106,7 +106,7 @@ export default function Index({ olts, filters, statuses }) {
 
     function deleteOlt(olt) {
         const confirmed = window.confirm(
-            `Delete ${olt.code}? This will also remove connected PON topology records linked to this OLT.`,
+            `Move ${olt.code} to trash? You can restore it later.`,
         );
 
         if (!confirmed) {
@@ -130,15 +130,31 @@ export default function Index({ olts, filters, statuses }) {
                 title="OLT Management"
                 description="Search, filter, review, and maintain OLT inventory for the access network."
                 actions={
-                    can("olt.create") ? (
-                        <Button
-                            variant="primary"
-                            icon={Plus}
-                            onClick={() => router.visit(route("olts.create"))}
-                        >
-                            Add OLT
-                        </Button>
-                    ) : null
+                    <div className="flex items-center gap-2">
+                        {(can("olt.restore") || can("olt.force-delete")) && (
+                            <Button
+                                variant="secondary"
+                                icon={Trash2}
+                                onClick={() =>
+                                    router.visit(route("olts.trash"))
+                                }
+                            >
+                                Trash
+                            </Button>
+                        )}
+
+                        {can("olt.create") && (
+                            <Button
+                                variant="primary"
+                                icon={Plus}
+                                onClick={() =>
+                                    router.visit(route("olts.create"))
+                                }
+                            >
+                                Add OLT
+                            </Button>
+                        )}
+                    </div>
                 }
             />
 
@@ -309,7 +325,7 @@ export default function Index({ olts, filters, statuses }) {
                                                                 deleteOlt(olt)
                                                             }
                                                         >
-                                                            Delete
+                                                            Move to Trash
                                                         </Button>
                                                     )}
                                                 </div>

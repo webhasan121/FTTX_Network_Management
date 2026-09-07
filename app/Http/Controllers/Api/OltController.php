@@ -23,7 +23,8 @@ class OltController extends Controller
 
     public function __construct(
         private readonly OltService $oltService
-    ) {}
+    ) {
+    }
 
     public function index(
         Request $request
@@ -107,6 +108,44 @@ class OltController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'OLT deleted successfully.',
+        ]);
+    }
+
+    public function trash(): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', Olt::class);
+
+        $olts = $this->oltService->trashed(
+            perPage: 10
+        );
+
+        return OltResource::collection($olts);
+    }
+    public function restore(int $id): JsonResponse
+    {
+        $olt = $this->oltService->findTrashed($id);
+
+        Gate::authorize('restore', $olt);
+
+        $olt = $this->oltService->restore($olt);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OLT restored successfully.',
+            'data' => new OltResource($olt),
+        ]);
+    }
+    public function forceDelete(int $id): JsonResponse
+    {
+        $olt = $this->oltService->findTrashed($id);
+
+        Gate::authorize('forceDelete', $olt);
+
+        $this->oltService->forceDelete($olt);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OLT permanently deleted successfully.',
         ]);
     }
 }

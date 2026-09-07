@@ -5,30 +5,26 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOltRequest;
 use App\Http\Requests\UpdateOltRequest;
 use App\Models\Olt;
-use Illuminate\Database\Eloquent\Builder;
+use App\Services\OltService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\OltService;
 
 class OltController extends Controller
 {
-
-    public function __construct(
-        private readonly OltService $oltService
-    ) {}
-
     private const STATUSES = [
         'online' => 'Online',
         'offline' => 'Offline',
         'maintenance' => 'Maintenance',
     ];
 
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(
+        private readonly OltService $oltService
+    ) {
+    }
+
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Olt::class);
@@ -57,8 +53,8 @@ class OltController extends Controller
                 perPage: 10,
             )
             ->through(
-                fn(Olt $olt): array =>
-                $this->indexData($olt)
+                fn (Olt $olt): array =>
+                    $this->indexData($olt)
             );
 
         return Inertia::render('OLT/Index', [
@@ -73,9 +69,6 @@ class OltController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): Response
     {
         Gate::authorize('create', Olt::class);
@@ -86,26 +79,23 @@ class OltController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-
-
-    public function store(StoreOltRequest $request): RedirectResponse
-    {
+    public function store(
+        StoreOltRequest $request
+    ): RedirectResponse {
         Gate::authorize('create', Olt::class);
+
         $olt = $this->oltService->store(
             $request->validated()
         );
 
         return redirect()
             ->route('olts.show', $olt)
-            ->with('success', 'OLT created successfully.');
+            ->with(
+                'success',
+                'OLT created successfully.'
+            );
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Olt $olt): Response
     {
         Gate::authorize('view', $olt);
@@ -117,9 +107,6 @@ class OltController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Olt $olt): Response
     {
         Gate::authorize('update', $olt);
@@ -130,14 +117,10 @@ class OltController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(
         UpdateOltRequest $request,
         Olt $olt
     ): RedirectResponse {
-
         Gate::authorize('update', $olt);
 
         $olt = $this->oltService->update(
@@ -147,12 +130,12 @@ class OltController extends Controller
 
         return redirect()
             ->route('olts.show', $olt)
-            ->with('success', 'OLT updated successfully.');
+            ->with(
+                'success',
+                'OLT updated successfully.'
+            );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Olt $olt): RedirectResponse
     {
         Gate::authorize('delete', $olt);
@@ -161,7 +144,61 @@ class OltController extends Controller
 
         return redirect()
             ->route('olts.index')
-            ->with('success', 'OLT deleted successfully.');
+            ->with(
+                'success',
+                'OLT moved to trash successfully.'
+            );
+    }
+
+    public function trash(): Response
+    {
+        Gate::authorize('viewAny', Olt::class);
+
+        $olts = $this->oltService
+            ->trashed(perPage: 10)
+            ->through(
+                fn (Olt $olt): array =>
+                    $this->trashData($olt)
+            );
+
+        return Inertia::render('OLT/Trash', [
+            'olts' => $olts,
+        ]);
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $olt = $this->oltService
+            ->findTrashed($id);
+
+        Gate::authorize('restore', $olt);
+
+        $this->oltService->restore($olt);
+
+        return redirect()
+            ->route('olts.trash')
+            ->with(
+                'success',
+                'OLT restored successfully.'
+            );
+    }
+
+    public function forceDelete(
+        int $id
+    ): RedirectResponse {
+        $olt = $this->oltService
+            ->findTrashed($id);
+
+        Gate::authorize('forceDelete', $olt);
+
+        $this->oltService->forceDelete($olt);
+
+        return redirect()
+            ->route('olts.trash')
+            ->with(
+                'success',
+                'OLT permanently deleted.'
+            );
     }
 
     private function indexData(Olt $olt): array
@@ -177,8 +214,11 @@ class OltController extends Controller
             'total_pon_ports' => $olt->total_pon_ports,
             'pon_ports_count' => $olt->pon_ports_count,
             'status' => $olt->status,
-            'status_label' => self::STATUSES[$olt->status] ?? $olt->status,
-            'updated_at' => $olt->updated_at?->diffForHumans(),
+            'status_label' =>
+                self::STATUSES[$olt->status]
+                ?? $olt->status,
+            'updated_at' =>
+                $olt->updated_at?->diffForHumans(),
         ];
     }
 
@@ -186,20 +226,58 @@ class OltController extends Controller
     {
         return [
             ...$this->formData($olt),
-            'status_label' => self::STATUSES[$olt->status] ?? $olt->status,
-            'connected_pon_ports_count' => $olt->pon_ports_count,
-            'created_at' => $olt->created_at?->toDayDateTimeString(),
-            'updated_at' => $olt->updated_at?->toDayDateTimeString(),
+
+            'status_label' =>
+                self::STATUSES[$olt->status]
+                ?? $olt->status,
+
+            'connected_pon_ports_count' =>
+                $olt->pon_ports_count,
+
+            'created_at' =>
+                $olt->created_at
+                    ?->toDayDateTimeString(),
+
+            'updated_at' =>
+                $olt->updated_at
+                    ?->toDayDateTimeString(),
+
             'pon_ports' => $olt->ponPorts
-                ->map(fn($ponPort): array => [
-                    'id' => $ponPort->id,
-                    'name' => $ponPort->name,
-                    'port_number' => $ponPort->port_number,
-                    'capacity' => $ponPort->capacity,
-                    'status' => $ponPort->status,
-                    'description' => $ponPort->description,
-                ])
+                ->map(
+                    fn ($ponPort): array => [
+                        'id' => $ponPort->id,
+                        'name' => $ponPort->name,
+                        'port_number' =>
+                            $ponPort->port_number,
+                        'capacity' =>
+                            $ponPort->capacity,
+                        'status' =>
+                            $ponPort->status,
+                        'description' =>
+                            $ponPort->description,
+                    ]
+                )
                 ->all(),
+        ];
+    }
+
+    private function trashData(Olt $olt): array
+    {
+        return [
+            'id' => $olt->id,
+            'name' => $olt->name,
+            'code' => $olt->code,
+            'vendor' => $olt->vendor,
+            'model' => $olt->model,
+            'ip_address' => $olt->ip_address,
+            'status' => $olt->status,
+
+            'status_label' =>
+                self::STATUSES[$olt->status]
+                ?? $olt->status,
+
+            'deleted_at' =>
+                $olt->deleted_at?->diffForHumans(),
         ];
     }
 
@@ -241,10 +319,15 @@ class OltController extends Controller
     private function statusOptions(): array
     {
         return collect(self::STATUSES)
-            ->map(fn(string $label, string $value): array => [
-                'value' => $value,
-                'label' => $label,
-            ])
+            ->map(
+                fn (
+                    string $label,
+                    string $value
+                ): array => [
+                    'value' => $value,
+                    'label' => $label,
+                ]
+            )
             ->values()
             ->all();
     }
