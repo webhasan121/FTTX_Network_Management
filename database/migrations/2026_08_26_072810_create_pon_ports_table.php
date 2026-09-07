@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('pon_ports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('olt_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('olt_id')->constrained('olts')->restrictOnDelete();
             $table->string('name');
             $table->unsignedSmallInteger('port_number');
             $table->unsignedSmallInteger('capacity')->default(128);
             $table->enum('status', ['active', 'disabled'])->default('active')->index();
             $table->text('description')->nullable();
             $table->timestamps();
-
             $table->unique(['olt_id', 'port_number']);
         });
     }

@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,18 +12,50 @@ return new class extends Migration
     {
         Schema::create('onus', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('distribution_point_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('serial_number')->unique();
-            $table->string('mac_address')->nullable()->index();
+
+            $table->foreignId('distribution_point_id')
+                ->nullable()
+                ->constrained('distribution_points')
+                ->restrictOnDelete();
+
+            $table->string('serial_number')
+                ->unique();
+
+            $table->string('mac_address')
+                ->nullable()
+                ->unique();
+
             $table->string('vendor');
+
             $table->string('model');
-            $table->decimal('rx_power', 8, 2)->nullable();
-            $table->decimal('tx_power', 8, 2)->nullable();
-            $table->enum('status', ['online', 'offline', 'los', 'disabled'])->default('offline')->index();
-            $table->timestamp('last_seen_at')->nullable()->index();
-            $table->timestamp('installed_at')->nullable();
-            $table->text('description')->nullable();
+
+            $table->decimal('rx_power', 8, 2)
+                ->nullable();
+
+            $table->decimal('tx_power', 8, 2)
+                ->nullable();
+
+            $table->enum('status', [
+                'online',
+                'offline',
+                'los',
+                'disabled',
+            ])
+                ->default('offline')
+                ->index();
+
+            $table->timestamp('last_seen_at')
+                ->nullable()
+                ->index();
+
+            $table->timestamp('installed_at')
+                ->nullable();
+
+            $table->text('description')
+                ->nullable();
+
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

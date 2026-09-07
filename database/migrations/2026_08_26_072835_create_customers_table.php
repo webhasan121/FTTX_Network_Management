@@ -23,6 +23,8 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active')->index();
             $table->timestamps();
+            $table->softDeletes();
+
         });
     }
 

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('splitters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pon_port_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('pon_port_id')->constrained('pon_ports')->restrictOnDelete();
             $table->string('code')->unique();
             $table->string('name');
             $table->string('ratio');
@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

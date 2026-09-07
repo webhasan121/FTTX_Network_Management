@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('distribution_points', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('splitter_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('splitter_id')->constrained('splitters')->restrictOnDelete();
             $table->string('code')->unique();
             $table->string('name');
             $table->string('type')->index();
@@ -25,6 +25,7 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
